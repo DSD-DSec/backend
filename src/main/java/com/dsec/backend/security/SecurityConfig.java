@@ -78,8 +78,8 @@ public class SecurityConfig {
 						.accessDeniedHandler(new BearerTokenAccessDeniedHandler()))
 
 				.authorizeRequests((authorizeRequests) -> authorizeRequests
-						.antMatchers("/auth/**", "/h2-console/**", "/v3/api-docs**",
-								"/swagger-ui.html/**")
+						.antMatchers("/auth/**", "/h2-console/**", "/v3/api-docs*/**",
+								"/swagger-ui*/**")
 						.permitAll()
 						.antMatchers("/**").access("hasAnyAuthority('SCOPE_USER','SCOPE_ADMIN')")
 						.anyRequest().authenticated())
