@@ -61,5 +61,5 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}
 
       - name: Push
-        run: docker push --all-tags ${{ steps.meta.outputs.tags }}
+        run: docker push ${{ steps.meta.outputs.tags }}
       
