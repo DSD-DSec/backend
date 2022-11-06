@@ -26,6 +26,11 @@ jobs:
       packages: write
 
     steps:
+      - id: string
+        uses: ASzc/change-string-case-action@v2
+        with:
+          string: ${{ env.IMAGE_NAME }}
+ 
       - name: Checkout repository
         uses: actions/checkout@v3
         
@@ -36,7 +41,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven
-        run: ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        run: ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}
 
       # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
       - name: Update dependency graph
@@ -53,7 +58,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}
 
       - name: Push
         run: docker push --all-tags ${{ steps.meta.outputs.tags }}
