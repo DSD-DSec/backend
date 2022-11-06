@@ -1,0 +1,46 @@
+
+server:
+    servlet:
+        context-path: /api
+        encoding:
+            charset: UTF-8
+            enabled: true
+            force: true
+
+spring:
+    datasource:
+        url: jdbc:h2:file:./target/database
+        username: sa
+        password: password
+        driverClassName: org.h2.Driver
+    jackson:
+        serialization:
+            fail-on-empty-beans: false
+    jpa:
+        defer-datasource-initialization: true
+        generate-ddl: true
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.H2Dialect
+        show-sql: true
+    h2:
+        console:
+            enabled: true
+    sql:
+        init:
+            mode: never 
+
+logging:
+    level:
+        org:
+            springframework: INFO
+            springframework:security.web: INFO
+        root: INFO
+
+jwt.private.key: classpath:app.key
+jwt.public.key: classpath:app.pub
+jwt.expiration: 36000
+jwt.cookie.name: Bearer
+
+cors.allow.origins: http://localhost:3000,https://52.23.174.195,http://52.23.174.195
+
