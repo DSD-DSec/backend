@@ -43,3 +43,4 @@ jwt.expiration: 36000
 jwt.cookie.name: Bearer
 
 cors.allow.origins: http://localhost:3000,https://52.23.174.195,http://52.23.174.195
+
