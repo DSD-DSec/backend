@@ -29,10 +29,10 @@ public class UserModel {
     @ManyToOne(optional = false)
     private UserRole userRole;
 
-    public UserModel() {
-    }
+    public UserModel() {}
 
-    public UserModel(Integer id, String firstName, String lastName, String email, String password, UserRole userRole) {
+    public UserModel(Integer id, String firstName, String lastName, String email, String password,
+            UserRole userRole) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -41,7 +41,8 @@ public class UserModel {
         this.userRole = userRole;
     }
 
-    public UserModel(String firstName, String lastName, String email, String password, UserRole userRole) {
+    public UserModel(String firstName, String lastName, String email, String password,
+            UserRole userRole) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;

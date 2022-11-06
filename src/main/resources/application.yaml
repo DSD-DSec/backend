@@ -9,7 +9,7 @@ server:
 
 spring:
     datasource:
-        url: jdbc:h2:mem:testdb
+        url: jdbc:h2:file:./target/database
         username: sa
         password: password
         driverClassName: org.h2.Driver
@@ -40,5 +40,6 @@ logging:
 jwt.private.key: classpath:app.key
 jwt.public.key: classpath:app.pub
 jwt.expiration: 36000
+jwt.cookie.name: Bearer
 
 cors.allow.origins: http://localhost:3000,https://52.23.174.195,http://52.23.174.195

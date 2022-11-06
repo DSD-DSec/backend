@@ -8,19 +8,19 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 public class ApiConfig {
 
     // @Bean
-    // public RepresentationModelProcessor<EntityModel<UserKamin>> personProcessor() {
+    // public RepresentationModelProcessor<EntityModel<UserInfoDTO>> personProcessor() {
 
-    //     return new RepresentationModelProcessor<EntityModel<UserKamin>>() {
+    // return new RepresentationModelProcessor<EntityModel<UserInfoDTO>>() {
 
-    //         @Override
-    //         public EntityModel<UserKamin> process(EntityModel<UserKamin> model) {
+    // @Override
+    // public EntityModel<UserInfoDTO> process(EntityModel<UserInfoDTO> model) {
 
-    //             model.add(linkTo(methodOn(UserController.class).stats(model.getContent().getId())).withRel("stats")
-    //                     .withType("get"));
-    //             model.add(linkTo(methodOn(UserController.class).userRoom()).withRel("userHasAccess").withType("get"));
-    //             return model;
-    //         }
-    //     };
+
+
+    // return null;
+    // }
+
+    // };
     // }
 
     @Bean

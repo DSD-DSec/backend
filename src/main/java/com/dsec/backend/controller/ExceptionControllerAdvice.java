@@ -35,11 +35,13 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 	public ResponseEntity<?> handleException(Exception e) {
 		e.printStackTrace();
 
-		return new ResponseEntity<>(createProps(e, HttpStatus.INTERNAL_SERVER_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
+		return new ResponseEntity<>(createProps(e, HttpStatus.INTERNAL_SERVER_ERROR),
+				HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<?> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+	public ResponseEntity<?> handleDataIntegrityViolationException(
+			DataIntegrityViolationException e) {
 		e.printStackTrace();
 
 		return new ResponseEntity<>(createProps(e, HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
@@ -56,7 +58,8 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 	public ResponseEntity<?> handleIllegalAccessException(IllegalAccessException e) {
 		e.printStackTrace();
 
-		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED), HttpStatus.UNAUTHORIZED);
+		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED),
+				HttpStatus.UNAUTHORIZED);
 	}
 
 	@ExceptionHandler(IllegalArgumentException.class)
@@ -70,7 +73,8 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 	public ResponseEntity<?> handleAuthenticationException(AuthenticationException e) {
 		e.printStackTrace();
 
-		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED), HttpStatus.UNAUTHORIZED);
+		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED),
+				HttpStatus.UNAUTHORIZED);
 	}
 
 	private Map<String, Object> createProps(Exception e, HttpStatus status) {

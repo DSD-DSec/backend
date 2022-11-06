@@ -19,8 +19,7 @@ public class UserRole {
     @Column(nullable = false, length = 20, unique = true)
     private Role roleName;
 
-    public UserRole() {
-    }
+    public UserRole() {}
 
     public UserRole(Role roleName) {
         this.roleName = roleName;

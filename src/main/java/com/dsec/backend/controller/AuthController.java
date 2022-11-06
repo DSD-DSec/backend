@@ -1,7 +1,7 @@
 package com.dsec.backend.controller;
 
 import java.util.List;
-
+import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.dsec.backend.DTO.LoginInfoDTO;
 import com.dsec.backend.DTO.UserDTO;
 import com.dsec.backend.DTO.UserInfoDTO;
@@ -33,9 +32,11 @@ public class AuthController {
 	ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
 
 		// TODO auto validation?
-		List<String> validStrings = List.of(userDTO.firstName(), userDTO.lastName(), userDTO.email(),
-				userDTO.password());
-		boolean isAnyEmpty = validStrings.stream().map(s -> Utils.isEmpty(s)).reduce((a, b) -> a || b).get();
+		List<String> validStrings =
+				List.of(userDTO.firstName(), userDTO.lastName(), userDTO.email(),
+						userDTO.password());
+		boolean isAnyEmpty =
+				validStrings.stream().map(s -> Utils.isEmpty(s)).reduce((a, b) -> a || b).get();
 
 		if (isAnyEmpty) {
 			logger.debug(userDTO.toString());
@@ -47,9 +48,10 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<UserInfoDTO> token(@RequestBody LoginInfoDTO dto) {
+	public ResponseEntity<UserInfoDTO> token(@RequestBody LoginInfoDTO dto,
+			HttpServletResponse response) {
 
-		return ResponseEntity.ok(userService.login(dto));
+		return ResponseEntity.ok(userService.login(dto, response));
 	}
 
 }

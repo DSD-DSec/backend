@@ -1,5 +1,8 @@
 package com.dsec.backend.DTO;
 
-public record UserInfoDTO(Integer id, String username, String firstName, String lastName, String token) {
+import com.dsec.backend.model.UserRole;
+
+public record UserInfoDTO(Integer id, String username, String firstName, String lastName,
+        UserRole userRole) {
 
 }

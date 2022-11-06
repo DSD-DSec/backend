@@ -12,7 +12,8 @@ import com.dsec.backend.model.UserRole;
 public class CORSConfigRepo implements RepositoryRestConfigurer {
 
     @Override
-    public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config, CorsRegistry cors) {
+    public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config,
+            CorsRegistry cors) {
         cors.addMapping("/**").allowedOrigins("*").allowedMethods("*");
         config.exposeIdsFor(UserModel.class, UserRole.class);
     }

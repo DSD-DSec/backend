@@ -2,8 +2,10 @@ package com.dsec.backend.security;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
 import java.util.List;
-
+import java.util.Optional;
+import javax.servlet.http.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +18,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,12 +27,12 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -51,6 +52,9 @@ public class SecurityConfig {
 	@Value("${jwt.private.key}")
 	private RSAPrivateKey priv;
 
+	@Value("${jwt.cookie.name}")
+	private String cookieName;
+
 	@Value("${cors.allow.origins}")
 	private String corsOrigins;
 
@@ -59,34 +63,50 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		// @formatter:off
+
 		return http.cors().and().csrf(csrf -> csrf.disable())
-				.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.sessionManagement(
+						(session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
 				.headers().frameOptions().disable().and()
-				/*
-				 * .exceptionHandling().authenticationEntryPoint((request, response, ex) -> {
-				 * response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage()); })
-				 */
-				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
 
-				.exceptionHandling(
-						(exceptions) -> exceptions.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
-								.accessDeniedHandler(new BearerTokenAccessDeniedHandler()))
+				.oauth2ResourceServer((customizer) -> customizer.jwt().and()
+						.bearerTokenResolver(getTokenResolver()))
 
-				.authorizeRequests(
-						(authorizeRequests) -> authorizeRequests.antMatchers("/auth/**", "/h2-console/**").permitAll()
-								// .antMatchers("/**").hasRole("USER")
-								.antMatchers("/**").access("hasAnyAuthority('SCOPE_USER','SCOPE_ADMIN')").anyRequest()
-								.authenticated())
+				.exceptionHandling((exceptions) -> exceptions
+						.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+						.accessDeniedHandler(new BearerTokenAccessDeniedHandler()))
+
+				.authorizeRequests((authorizeRequests) -> authorizeRequests
+						.antMatchers("/auth/**", "/h2-console/**", "/v3/api-docs**",
+								"/swagger-ui.html/**")
+						.permitAll()
+						.antMatchers("/**").access("hasAnyAuthority('SCOPE_USER','SCOPE_ADMIN')")
+						.anyRequest().authenticated())
 
 				.formLogin().disable()
 
 				.userDetailsService(myUserDetailsService)
 
 				.build();
-		// @formatter:on
 
+	}
+
+	private BearerTokenResolver getTokenResolver() {
+		return (request) -> {
+			Cookie[] cookies = request.getCookies();
+			Optional<Cookie> cookie = Optional.empty();
+			if (cookies != null) {
+				cookie = Arrays.stream(cookies).filter(c -> c.getName().equals(cookieName))
+						.findAny();
+			}
+
+			if (!cookie.isEmpty()) {
+				return cookie.get().getValue();
+			}
+
+			return null;
+		};
 	}
 
 	@Bean
@@ -126,8 +146,8 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-			throws Exception {
+	public AuthenticationManager authenticationManager(
+			AuthenticationConfiguration authenticationConfiguration) throws Exception {
 		return authenticationConfiguration.getAuthenticationManager();
 	}
 
