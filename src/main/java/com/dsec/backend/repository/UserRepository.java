@@ -9,5 +9,5 @@ import com.dsec.backend.model.UserModel;
 public interface UserRepository extends JpaRepository<UserModel, Integer> {
 
     List<UserModel> findByEmailEquals(String email);
-
+    UserModel findById(int id);
 }

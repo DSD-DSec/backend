@@ -1,13 +1,27 @@
 package com.dsec.backend.service;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.dsec.backend.DTO.LoginInfoDTO;
@@ -19,27 +33,38 @@ import com.dsec.backend.model.UserRole;
 import com.dsec.backend.repository.RoleRepository;
 import com.dsec.backend.repository.UserRepository;
 import com.dsec.backend.security.UserPrincipal;
-import com.dsec.backend.util.cookie.CookieUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 @Service
 public class UserServiceImpl implements UserService {
+	private static Logger logger = LoggerFactory.getLogger(UserService.class);
 
 	private UserRepository userRepository;
 	private RoleRepository roleRepository;
 
 	private PasswordEncoder passwordEncoder;
+	private JwtEncoder jtwEncoder;
 	private AuthenticationManager manager;
-	private CookieUtil cookieUtil;
+	private ObjectMapper objectMapper;
+
+	@Value("${jwt.expiration}")
+	private long jwtExpiry;
+
+	@Value("${jwt.cookie.name}")
+	private String cookieName;
 
 	@Autowired
 	public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository,
-			PasswordEncoder passwordEncoder, AuthenticationManager manager,
-			CookieUtil cookieUtil) {
+			PasswordEncoder passwordEncoder, JwtEncoder jtwEncoder, AuthenticationManager manager,
+			ObjectMapper objectMapper) {
 		this.userRepository = userRepository;
 		this.roleRepository = roleRepository;
 		this.passwordEncoder = passwordEncoder;
+		this.jtwEncoder = jtwEncoder;
 		this.manager = manager;
-		this.cookieUtil = cookieUtil;
+		this.objectMapper = objectMapper;
 	}
 
 	@Override
@@ -58,6 +83,7 @@ public class UserServiceImpl implements UserService {
 
 		return ServletUriComponentsBuilder.fromPath("api/users/{id}")
 				.buildAndExpand(userModel.getId()).toUri();
+
 	}
 
 	@Override
@@ -68,12 +94,61 @@ public class UserServiceImpl implements UserService {
 
 		UserPrincipal user = (UserPrincipal) auth.getPrincipal();
 
-		cookieUtil.createJwtCookie(response, user);
+		Instant now = Instant.now();
+
+		String scope = auth.getAuthorities().stream()
+				.map(GrantedAuthority::getAuthority)
+				.collect(Collectors.joining(" "));
+
+		String object = null;
+		try {
+			object = objectMapper.writeValueAsString(user);
+		} catch (JsonProcessingException e) {
+			logger.error("UserPrincipal serialization error {}", e.getMessage());
+		}
+
+		JwtClaimsSet claims = JwtClaimsSet.builder()
+				.issuer("self")
+				.issuedAt(now)
+				.expiresAt(now.plusSeconds(jwtExpiry))
+				.subject(auth.getName())
+				.claim("scope", scope)
+				.claim("object", object)
+				.build();
+
+		String token = this.jtwEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+		ResponseCookie cookie = ResponseCookie.from(cookieName, token).httpOnly(true).path("/api")
+				.maxAge(jwtExpiry).build();
+
+		response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
 		UserModel userModel = user.getUserModel();
 		return new UserInfoDTO(userModel.getId(), user.getUsername(), userModel.getFirstName(),
 				userModel.getLastName(), userModel.getUserRole());
+
 	}
+
+	@Override
+	public ResponseEntity<?> getAllUsers() throws JsonProcessingException {
+		final ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+		int i = 0;
+		String responseBody = new String();
+		for (UserModel userModel : userRepository.findAll()) {
+			String tmpString = "";
+			if(i != 0)
+				tmpString = ",";
+			tmpString = tmpString + ("\""+i+"\":"+mapper.writeValueAsString(new UserInfoDTO(userModel.getId(), userModel.getEmail(), userModel.getFirstName(), userModel.getLastName(), userModel.getUserRole())));
+			responseBody = responseBody + tmpString;
+			i++;
+		}
+
+		if(responseBody.isEmpty())
+			return ResponseEntity.noContent().build();
+
+		return ResponseEntity.ok( responseBody);
+	}
+
 
 	@Override
 	public UserInfoDTO getUser(Jwt user) {
@@ -84,6 +159,36 @@ public class UserServiceImpl implements UserService {
 
 		return new UserInfoDTO(userModel.getId(), userModel.getEmail(),
 				userModel.getFirstName(), userModel.getLastName(), userModel.getUserRole());
+	}
+
+	@Override
+	public ResponseEntity<?> editUser(int id, UserDTO userDTO)
+	{
+		try
+		{
+			if(id == userDTO.id())
+			{
+				UserModel userModel = userRepository.findById(id);
+				Jwt user = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+				JSONObject userData = new JSONObject((String) user.getClaim("object"));
+				System.out.println(userModel.getId());
+				if(userData.getJSONObject("userModel").getInt("id") == userModel.getId())
+				{
+					// TODO: missing validation
+					userModel.setFirstName(userDTO.firstName());
+					userModel.setLastName(userDTO.lastName());
+					userModel.setPassword(passwordEncoder.encode(userDTO.password()));
+					userModel.setEmail(userDTO.email());
+					userRepository.save(userModel);
+					return ResponseEntity.status(204).build();
+				}
+			}
+
+			return ResponseEntity.status(401).build();
+
+		} catch(Exception e) {
+			return ResponseEntity.notFound().build();
+		}
 	}
 
 }
