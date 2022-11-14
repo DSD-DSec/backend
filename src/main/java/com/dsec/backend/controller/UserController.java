@@ -32,7 +32,8 @@ public class UserController {
     @PostMapping("/logout")
     ResponseEntity<?> logout(HttpServletResponse response) {
         response.setHeader(HttpHeaders.SET_COOKIE,
-                ResponseCookie.from(cookieName, "").maxAge(0).build().toString());
+                ResponseCookie.from(cookieName, "").httpOnly(true).path("/api")
+                        .maxAge(0).build().toString());
 
         return ResponseEntity.ok().build();
     }
