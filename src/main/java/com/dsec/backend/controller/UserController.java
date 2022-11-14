@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.dsec.backend.DTO.EmptyDTO;
 import com.dsec.backend.DTO.UserInfoDTO;
 import com.dsec.backend.service.UserService;
 
@@ -30,12 +31,12 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    ResponseEntity<?> logout(HttpServletResponse response) {
+    ResponseEntity<EmptyDTO> logout(HttpServletResponse response) {
         response.setHeader(HttpHeaders.SET_COOKIE,
                 ResponseCookie.from(cookieName, "").httpOnly(true).path("/api")
                         .maxAge(0).build().toString());
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(new EmptyDTO());
     }
 
     @GetMapping("/me")
