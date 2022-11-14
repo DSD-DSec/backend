@@ -47,5 +47,10 @@ public class UserController {
     }
 
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> DeleteUserById(@PathVariable("id") int id) {
+        ResponseEntity<?> re =  userService.DeleteUserByID(id);
+        return new ResponseEntity<>("{ " + BackendApplication.getHALJSON() + (re.hasBody() ?  ("\"results\":"+re.getBody()) : "")+"}",re.getStatusCode());
+    }
 
 }
