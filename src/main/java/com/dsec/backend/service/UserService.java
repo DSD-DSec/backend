@@ -43,7 +43,6 @@ public class UserService implements IUserService {
 	private PasswordEncoder passwordEncoder;
 	private JwtEncoder jtwEncoder;
 	private AuthenticationManager manager;
-	private ObjectMapper objectMapper;
 
 	@Value("${jwt.expiration}")
 	private long jwtExpiry;
@@ -53,14 +52,12 @@ public class UserService implements IUserService {
 
 	@Autowired
 	public UserService(UserRepository userRepository, RoleRepository roleRepository,
-			PasswordEncoder passwordEncoder, JwtEncoder jtwEncoder, AuthenticationManager manager,
-			ObjectMapper objectMapper) {
+			PasswordEncoder passwordEncoder, JwtEncoder jtwEncoder, AuthenticationManager manager) {
 		this.userRepository = userRepository;
 		this.roleRepository = roleRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.jtwEncoder = jtwEncoder;
 		this.manager = manager;
-		this.objectMapper = objectMapper;
 	}
 
 	@Override
@@ -96,20 +93,15 @@ public class UserService implements IUserService {
 				.map(GrantedAuthority::getAuthority)
 				.collect(Collectors.joining(" "));
 
-		String object = null;
-		try {
-			object = objectMapper.writeValueAsString(user);
-		} catch (JsonProcessingException e) {
-			logger.error("UserPrincipal serialization error {}", e.getMessage());
-		}
-
 		JwtClaimsSet claims = JwtClaimsSet.builder()
 				.issuer("self")
 				.issuedAt(now)
 				.expiresAt(now.plusSeconds(jwtExpiry))
 				.subject(auth.getName())
 				.claim("scope", scope)
-				.claim("object", object)
+				.claim("firstName", user.getUserModel().getFirstName())
+				.claim("lastName", user.getUserModel().getLastName())
+				.claim("id", user.getUserModel().getId())
 				.build();
 
 		String token = this.jtwEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
@@ -128,20 +120,13 @@ public class UserService implements IUserService {
 	@Override
 	public UserInfoDTO getUser(Jwt user) {
 
-		try {
-			UserPrincipal userPrincipal =
-					objectMapper.readValue((String) user.getClaim("object"), UserPrincipal.class);
+		String username = user.getSubject();
 
-			UserModel userModel = userPrincipal.getUserModel();
+		UserModel userModel = userRepository.findByEmailEquals(username).get(0);
 
-			return new UserInfoDTO(userModel.getId(), userModel.getEmail(),
-					userModel.getFirstName(), userModel.getLastName(), userModel.getUserRole());
+		return new UserInfoDTO(userModel.getId(), userModel.getEmail(),
+				userModel.getFirstName(), userModel.getLastName(), userModel.getUserRole());
 
-		} catch (Exception e) {
-			logger.error("UserPrincipal deserialization error {}", e.getMessage());
-
-			throw new RuntimeException(e);
-		}
 	}
 
 }

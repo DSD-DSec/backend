@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.dsec.backend.DTO.EmptyDTO;
 import com.dsec.backend.DTO.LoginInfoDTO;
 import com.dsec.backend.DTO.UserDTO;
 import com.dsec.backend.DTO.UserInfoDTO;
@@ -29,7 +30,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/register")
-	ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
+	ResponseEntity<EmptyDTO> register(@RequestBody UserDTO userDTO) {
 
 		// TODO auto validation?
 		List<String> validStrings =
@@ -44,7 +45,7 @@ public class AuthController {
 			return ResponseEntity.badRequest().build();
 		}
 
-		return ResponseEntity.created(userService.register(userDTO)).build();
+		return ResponseEntity.created(userService.register(userDTO)).body(new EmptyDTO());
 	}
 
 	@PostMapping("/login")

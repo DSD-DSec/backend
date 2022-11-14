@@ -29,6 +29,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -71,7 +72,8 @@ public class SecurityConfig {
 				.headers().frameOptions().disable().and()
 
 				.oauth2ResourceServer((customizer) -> customizer.jwt().and()
-						.bearerTokenResolver(getTokenResolver()))
+						.bearerTokenResolver(getTokenResolver())
+						.authenticationEntryPoint(getAuthenticationEntryPoint()))
 
 				.exceptionHandling((exceptions) -> exceptions
 						.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
@@ -90,6 +92,10 @@ public class SecurityConfig {
 
 				.build();
 
+	}
+
+	private AuthenticationEntryPoint getAuthenticationEntryPoint() {
+		return new MyAuthenticationEntryPoint(cookieName);
 	}
 
 	private BearerTokenResolver getTokenResolver() {
