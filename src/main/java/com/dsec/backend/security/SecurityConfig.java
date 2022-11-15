@@ -126,7 +126,7 @@ public class SecurityConfig {
 	public CorsFilter corsFilter() {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		CorsConfiguration config = new CorsConfiguration();
-		// config.setAllowCredentials(true);
+		config.setAllowCredentials(true);
 		config.setAllowedOrigins(List.of(corsOrigins.split(",")));
 		config.addAllowedHeader("*");
 		config.addAllowedMethod("*");
