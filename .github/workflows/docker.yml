@@ -69,14 +69,37 @@ jobs:
           docker tag ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }} ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}:${{ steps.project.outputs.version }}
           docker push ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}:${{ steps.project.outputs.version }}
 
-      - name: Adding secret
-        run: |
-          echo ${{secrets.PROD_APPLICATION_PROPERTIES}} > src/main/resources/application-prod.properties
-          echo ${{secrets.PROD_RSA_PRIV}} > src/main/resources/app.key
-          echo ${{secrets.PROD_RSA_PUB}} > src/main/resources/app.pub
-          ls .
-          ls src/main/resources
-        shell: bash
+      - name: Overwrite properties
+        uses: "DamianReeves/write-file-action@master"
+        with:
+          path: src/main/resources/application-prod.properties
+          write-mode: overwrite
+          contents: |
+            ${{secrets.PROD_APPLICATION_PROPERTIES}}
+
+      - name: Overwrite pub key
+        uses: "DamianReeves/write-file-action@master"
+        with:
+          path: src/main/resources/app.pub
+          write-mode: overwrite
+          contents: |
+            ${{secrets.PROD_RSA_PUB}}
+      
+      - name: Overwrite priv key
+        uses: "DamianReeves/write-file-action@master"
+        with:
+          path: src/main/resources/app.key
+          write-mode: overwrite
+          contents: |
+            ${{secrets.PROD_RSA_PRIV}}
+      
+      - name: Read properties
+        id: read_props
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ./src/main/resources/application-prod.properties
+      - name: Echo properties
+        run: echo "${{ steps.read_props.outputs.content }}"
 
       - name: Build with Maven
         run: ./mvnw clean package -DskipTests=true -Pprod
