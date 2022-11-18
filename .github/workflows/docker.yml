@@ -74,7 +74,8 @@ jobs:
           echo ${{secrets.PROD_APPLICATION_PROPERTIES}} > src/main/resources/application-prod.properties
           echo ${{secrets.PROD_RSA_PRIV}} > src/main/resources/app.key
           echo ${{secrets.PROD_RSA_PUB}} > src/main/resources/app.pub
-          cat src/main/resources/application-prod.properties
+          ls .
+          ls src/main/resources
         shell: bash
 
       - name: Build with Maven
