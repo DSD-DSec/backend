@@ -93,13 +93,13 @@ jobs:
           contents: |
             ${{secrets.PROD_RSA_PRIV}}
       
-      - name: Read properties
-        id: read_props
-        uses: juliangruber/read-file-action@v1
-        with:
-          path: ./src/main/resources/application-prod.properties
-      - name: Echo properties
-        run: echo "${{ steps.read_props.outputs.content }}"
+      # - name: Read properties
+      #   id: read_props
+      #   uses: juliangruber/read-file-action@v1
+      #   with:
+      #     path: ./src/main/resources/application-prod.properties
+      # - name: Echo properties
+      #   run: echo "${{ steps.read_props.outputs.content }}"
 
       - name: Build with Maven
         run: ./mvnw clean package -DskipTests=true -Pprod
