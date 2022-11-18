@@ -101,9 +101,6 @@ jobs:
       # - name: Echo properties
       #   run: echo "${{ steps.read_props.outputs.content }}"
 
-      - name: Build with Maven
-        run: ./mvnw clean package -DskipTests=true -Pprod
-
       - name: Login Heroku
         uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
         with:
