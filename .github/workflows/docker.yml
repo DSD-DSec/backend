@@ -110,10 +110,9 @@ jobs:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
           heroku_app_name: "dsec-backend" #Must be unique in Heroku
           heroku_email: "jan.rocek@fer.hr"
-          justlogin: true
       
-      - run: | 
-          heroku plugins:install java
-          heroku create --no-remote
-          heroku deploy:jar target/backend-${{ steps.project.outputs.version }}.jar --app dsec-backend
+      # - run: | 
+      #     heroku plugins:install java
+      #     heroku create --no-remote
+      #     heroku deploy:jar target/backend-${{ steps.project.outputs.version }}.jar --app dsec-backend
       
