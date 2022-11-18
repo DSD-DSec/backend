@@ -65,7 +65,9 @@ jobs:
       #    images: ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}
 
       - name: Push
-        run: docker push ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}:${{ steps.project.outputs.version }}
+        run: |
+          docker tag ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }} ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}:${{ steps.project.outputs.version }}
+          docker push ${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}:${{ steps.project.outputs.version }}
 
       - name: Adding secret
         run: |
