@@ -4,28 +4,25 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import com.dsec.backend.util.cookie.CookieUtil;
 
 public class MyAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private BearerTokenAuthenticationEntryPoint bearerAuthEntryPoint;
-    private String cookieName;
+    private CookieUtil cookieUtil;
 
-    public MyAuthenticationEntryPoint(String cookieName) {
+    public MyAuthenticationEntryPoint(CookieUtil cookieUtil) {
         bearerAuthEntryPoint = new BearerTokenAuthenticationEntryPoint();
-        this.cookieName = cookieName;
+        this.cookieUtil = cookieUtil;
     }
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
 
-        response.setHeader(HttpHeaders.SET_COOKIE,
-                ResponseCookie.from(cookieName, "").httpOnly(true).path("/api")
-                        .maxAge(0).build().toString());
+        cookieUtil.deleteJwtCookie(response);
 
         bearerAuthEntryPoint.commence(request, response, authException);
     }

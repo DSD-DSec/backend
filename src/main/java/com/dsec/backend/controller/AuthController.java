@@ -14,7 +14,7 @@ import com.dsec.backend.DTO.EmptyDTO;
 import com.dsec.backend.DTO.LoginInfoDTO;
 import com.dsec.backend.DTO.UserDTO;
 import com.dsec.backend.DTO.UserInfoDTO;
-import com.dsec.backend.service.IUserService;
+import com.dsec.backend.service.UserService;
 import com.jayway.jsonpath.internal.Utils;
 
 @RestController
@@ -22,10 +22,10 @@ import com.jayway.jsonpath.internal.Utils;
 public class AuthController {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final IUserService userService;
+	private final UserService userService;
 
 	@Autowired
-	public AuthController(IUserService userService) {
+	public AuthController(UserService userService) {
 		this.userService = userService;
 	}
 

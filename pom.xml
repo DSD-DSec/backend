@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.dsec</groupId>
 	<artifactId>backend</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>backend</name>
 	<description>Dsec Backend</description>
 	<properties>
@@ -18,6 +18,58 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring.doc.version>1.6.12</spring.doc.version>
 	</properties>
+
+	<profiles>
+		<profile>
+			<id>dev</id>
+
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+
+			<properties>
+				<spring.profiles.active>dev</spring.profiles.active>
+			</properties>
+
+			<dependencies>
+				<dependency>
+					<groupId>com.h2database</groupId>
+					<artifactId>h2</artifactId>
+					<scope>runtime</scope>
+				</dependency>
+
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-devtools</artifactId>
+					<scope>runtime</scope>
+					<optional>true</optional>
+				</dependency>
+
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-actuator</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+
+		<profile>
+			<id>prod</id>
+
+			<properties>
+				<spring.profiles.active>prod</spring.profiles.active>
+			</properties>
+
+			<dependencies>
+				<dependency>
+					<groupId>org.postgresql</groupId>
+					<artifactId>postgresql</artifactId>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
+
+
 	<dependencies>
 
 		<dependency>
@@ -45,18 +97,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
+		
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-configuration-processor</artifactId>
@@ -88,19 +129,19 @@
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-hateoas</artifactId>
 			<version>${spring.doc.version}</version>
-		 </dependency>
+		</dependency>
 
-		 <dependency>
+		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-data-rest</artifactId>
 			<version>${spring.doc.version}</version>
-		 </dependency>
+		</dependency>
 
-		 <dependency>
+		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-security</artifactId>
 			<version>${spring.doc.version}</version>
-		 </dependency>
+		</dependency>
 
 	</dependencies>
 
