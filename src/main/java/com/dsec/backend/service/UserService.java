@@ -18,11 +18,13 @@ public interface UserService {
 
 	UserInfoDTO getUser(Jwt user);
 
+	ResponseEntity<?> getAllUsers() throws JsonProcessingException;
+
 	ResponseEntity<?> editUser(int id, UserDTO userDTO);
 
-	ResponseEntity<?> getAllUsers() throws JsonProcessingException;
 
 	UserModel deleteUserById(Integer idUser, Jwt principal) throws IllegalAccessException;
 
 	UserModel fetch(Integer id);
+
 }

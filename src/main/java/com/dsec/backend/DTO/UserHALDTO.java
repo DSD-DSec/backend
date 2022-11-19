@@ -38,5 +38,3 @@ public class UserHALDTO extends RepresentationModel<UserHALDTO> {
     @NotNull
     @Size(message = "{UserHALDTO.password}")
     private String password;
-
-}

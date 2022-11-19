@@ -1,13 +1,10 @@
 package com.dsec.backend.controller;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -63,22 +60,11 @@ public class UserController {
         try {
             UserModel model = userService.deleteUserById(id, principal);
             UserHALDTO user = new UserHALDTO(model.getId(), model.getFirstName(), model.getLastName(), model.getEmail(), model.getPassword());
-            user.add(getLinks(id));
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             logger.debug(e.getMessage());
             throw e;
         }
     }
-
-    private Link[] getLinks(Integer id) throws IllegalAccessException {
-        return new Link[] { linkDeleteUser(id) };
-    }
-
-    private Link linkDeleteUser(Integer id) throws IllegalAccessException {
-            return linkTo(methodOn(getClass()).deleteUser(id, null)).withRel("delete").withType("delete");
-    }
-
-
 
 }
