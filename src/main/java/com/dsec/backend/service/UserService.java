@@ -7,6 +7,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.dsec.backend.DTO.LoginInfoDTO;
 import com.dsec.backend.DTO.UserDTO;
 import com.dsec.backend.DTO.UserInfoDTO;
+import com.dsec.backend.model.UserModel;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 public interface UserService {
@@ -20,4 +21,8 @@ public interface UserService {
 	ResponseEntity<?> editUser(int id, UserDTO userDTO);
 
 	ResponseEntity<?> getAllUsers() throws JsonProcessingException;
+
+	UserModel deleteUserById(Integer idUser, Jwt principal) throws IllegalAccessException;
+
+	UserModel fetch(Integer id);
 }

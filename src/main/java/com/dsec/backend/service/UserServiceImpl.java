@@ -2,6 +2,7 @@ package com.dsec.backend.service;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -36,6 +38,7 @@ import com.dsec.backend.security.UserPrincipal;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import exception.EntityMissingException;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -189,6 +192,24 @@ public class UserServiceImpl implements UserService {
 		} catch(Exception e) {
 			return ResponseEntity.notFound().build();
 		}
+	}
+
+	@Override
+	@PreAuthorize("isAuthenticated()")
+	public UserModel deleteUserById(Integer idUser, Jwt principal) throws IllegalAccessException {
+		List<UserModel> model = userRepository.findByEmailEquals(principal.getSubject());
+		if (!model.get(0).getId().equals(idUser))
+			throw new IllegalAccessException("Invalid user deletion.");
+
+		UserModel user = fetch(idUser);
+		userRepository.delete(user);
+		return user;
+	}
+
+	@Override
+	@PreAuthorize("isAuthenticated()")
+	public UserModel fetch(Integer id) {
+		return userRepository.findById(id).orElseThrow(() -> new EntityMissingException(UserModel.class, id));
 	}
 
 }

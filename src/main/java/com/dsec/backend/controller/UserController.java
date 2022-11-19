@@ -1,23 +1,34 @@
 package com.dsec.backend.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import javax.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.dsec.backend.DTO.EmptyDTO;
+import com.dsec.backend.DTO.UserHALDTO;
 import com.dsec.backend.DTO.UserInfoDTO;
+import com.dsec.backend.model.UserModel;
 import com.dsec.backend.service.UserService;
 import com.dsec.backend.util.cookie.CookieUtil;
 
 @RestController
 @RequestMapping(value = "/users", produces = "application/hal+json")
 public class UserController {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final UserService userService;
 
@@ -47,10 +58,27 @@ public class UserController {
     }
 
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> DeleteUserById(@PathVariable("id") int id) {
-        ResponseEntity<?> re =  userService.DeleteUserByID(id);
-        return new ResponseEntity<>("{ " + BackendApplication.getHALJSON() + (re.hasBody() ?  ("\"results\":"+re.getBody()) : "")+"}",re.getStatusCode());
+    @DeleteMapping(value = "/{id}", produces = { "application/json; charset=UTF-8" })
+    public ResponseEntity<?> deleteUser(@PathVariable(name = "id") Integer id, @AuthenticationPrincipal Jwt principal) throws IllegalAccessException {
+        try {
+            UserModel model = userService.deleteUserById(id, principal);
+            UserHALDTO user = new UserHALDTO(model.getId(), model.getFirstName(), model.getLastName(), model.getEmail(), model.getPassword());
+            user.add(getLinks(id));
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            logger.debug(e.getMessage());
+            throw e;
+        }
     }
+
+    private Link[] getLinks(Integer id) throws IllegalAccessException {
+        return new Link[] { linkDeleteUser(id) };
+    }
+
+    private Link linkDeleteUser(Integer id) throws IllegalAccessException {
+            return linkTo(methodOn(getClass()).deleteUser(id, null)).withRel("delete").withType("delete");
+    }
+
+
 
 }

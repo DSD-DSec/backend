@@ -3,6 +3,7 @@ package com.dsec.backend.controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import exception.EntityMissingException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mapping.PropertyReferenceException;
@@ -75,6 +76,13 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
 		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED),
 				HttpStatus.UNAUTHORIZED);
+	}
+
+	@ExceptionHandler(EntityMissingException.class)
+	public ResponseEntity<?> handleEntityMissingException(EntityMissingException e) {
+		e.printStackTrace();
+
+		return new ResponseEntity<>(createProps(e, HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
 	}
 
 	private Map<String, Object> createProps(Exception e, HttpStatus status) {
