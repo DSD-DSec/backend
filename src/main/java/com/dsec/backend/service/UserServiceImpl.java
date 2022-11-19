@@ -107,7 +107,7 @@ public class UserServiceImpl implements UserService {
 		// JSONObject userData = new JSONObject((String) user.getClaim("object"));
 		// System.out.println(userModel.getId());
 		// if (userData.getJSONObject("userModel").getInt("id") == userModel.getId()) {
-		// // TODO: missing validation
+		// 
 		// userEntity.setFirstName(userDTO.firstName());
 		// userEntity.setLastName(userDTO.lastName());
 		// userEntity.setPassword(passwordEncoder.encode(userDTO.password()));

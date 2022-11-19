@@ -21,8 +21,7 @@ public class RoleAssembler extends RepresentationModelAssemblerSupport<UserRole,
 
         dto.add(linkTo(
                 methodOn(RoleController.class)
-                        .getRoles()withSelfRel()
-            );
+                        .getRoles()).withSelfRel());
 
         dto.setId(entity.getId());
         dto.setRoleName(entity.getRoleName());
