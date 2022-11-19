@@ -74,18 +74,13 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserEntity deleteUser(long id, Jwt jwt) {
-		// TODO Auto-generated method stub
+	public UserEntity deleteUser(long id, Jwt jwt) throws IllegalAccessException {
+		UserEntity user = userRepository.findByEmail(jwt.getSubject());
+		if (!user.getId().equals(id))
+			throw new IllegalAccessException("Invalid user deletion.");
 
-		// List<UserModel> model = userRepository.findByEmailEquals(principal.getSubject());
-		// if (!model.get(0).getId().equals(idUser))
-		// throw new IllegalAccessException("Invalid user deletion.");
-
-		// UserModel user = fetch(idUser);
-		// userRepository.delete(user);
-		// return user;
-
-		return null;
+		userRepository.delete(user);
+		return user;
 	}
 
 	@Override

@@ -13,12 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.UserAssembler;
 import com.dsec.backend.model.EmptyDTO;
@@ -28,6 +23,9 @@ import com.dsec.backend.specification.UserSpecification;
 import com.dsec.backend.util.cookie.CookieUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping(value = "/users",
@@ -99,11 +97,13 @@ public class UserController {
         return ResponseEntity.ok(pageModel);
     }
 
-    // @DeleteMapping("/{id}")
-    // public ResponseEntity<UserDTO> deleteUser(@PathVariable("id") long id,
-    // @AuthenticationPrincipal Jwt jwt) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<UserDTO> deleteUser(@PathVariable("id") long id, @AuthenticationPrincipal Jwt jwt) throws IllegalAccessException {
+        UserEntity user = userService.deleteUser(id, jwt);
 
-    // }
+        UserDTO userDTO = userAssembler.toModel(user);
+        return ResponseEntity.ok(userDTO);
+    }
 
     // @PatchMapping("/{id}")
     // public ResponseEntity<UserDTO> deleteUser(@PathVariable("id") long id,

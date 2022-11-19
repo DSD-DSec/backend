@@ -20,7 +20,7 @@ public interface UserService {
 
 	UserEntity updateUser(long id, UserDTO userDTO, Jwt jwt);
 
-	UserEntity deleteUser(long id, Jwt jwt);
+	UserEntity deleteUser(long id, Jwt jwt) throws IllegalAccessException;
 
 	UserEntity fetch(long id);
 
