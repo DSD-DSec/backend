@@ -1,30 +1,27 @@
 package com.dsec.backend.service;
 
-import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.oauth2.jwt.Jwt;
-import com.dsec.backend.DTO.LoginInfoDTO;
-import com.dsec.backend.DTO.UserDTO;
-import com.dsec.backend.DTO.UserInfoDTO;
-import com.dsec.backend.model.UserModel;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.model.LoginDTO;
+import com.dsec.backend.model.UserDTO;
+import com.dsec.backend.model.UserRegisterDTO;
 
 public interface UserService {
 
-	URI register(UserDTO userDTO);
+	UserEntity register(UserRegisterDTO userRegisterDTO);
 
-	UserInfoDTO login(LoginInfoDTO loginInfoDTO, HttpServletResponse response);
+	UserEntity login(LoginDTO loginDTO, HttpServletResponse response);
 
-	UserInfoDTO getUser(Jwt user);
+	Page<UserEntity> findUsers(Pageable pageable, Specification<UserEntity> specification);
 
-	ResponseEntity<?> getAllUsers() throws JsonProcessingException;
+	UserEntity updateUser(long id, UserDTO userDTO, Jwt jwt);
 
-	ResponseEntity<?> editUser(int id, UserDTO userDTO);
+	UserEntity deleteUser(long id, Jwt jwt);
 
-
-	UserModel deleteUserById(Integer idUser, Jwt principal) throws IllegalAccessException;
-
-	UserModel fetch(Integer id);
+	UserEntity fetch(long id);
 
 }

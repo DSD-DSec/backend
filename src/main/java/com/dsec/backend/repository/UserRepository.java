@@ -1,13 +1,13 @@
 package com.dsec.backend.repository;
 
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
-import com.dsec.backend.model.UserModel;
+import com.dsec.backend.entity.UserEntity;
 
 @Repository
-public interface UserRepository extends JpaRepository<UserModel, Integer> {
+public interface UserRepository extends JpaRepository<UserEntity, Long>, JpaSpecificationExecutor<UserEntity> {
 
-    List<UserModel> findByEmailEquals(String email);
-    UserModel findById(int id);
+    UserEntity findByEmail(String email);
+
 }

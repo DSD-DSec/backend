@@ -8,7 +8,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Component;
-import com.dsec.backend.model.UserModel;
+import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.security.UserPrincipal;
 
 @Component
@@ -28,7 +28,7 @@ public class JwtUtil {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
 
-        UserModel user = userPrincipal.getUserModel();
+        UserEntity user = userPrincipal.getUserEntity();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("self")
