@@ -1,17 +1,22 @@
 package com.dsec.backend.model.user;
 
+import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.validation.UniqueEmail;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import org.springframework.hateoas.RepresentationModel;
+
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
-import com.dsec.backend.validation.UniqueEmail;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
-public class UserUpdateDTO {
+public class UserUpdateDTO extends RepresentationModel<UserEntity> {
 
     @NotEmpty(message = "Please enter an email")
     @Email(message = "Email is not valid")

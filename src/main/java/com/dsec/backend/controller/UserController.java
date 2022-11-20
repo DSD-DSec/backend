@@ -8,24 +8,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.UserAssembler;
 import com.dsec.backend.model.EmptyDTO;
-import com.dsec.backend.model.user.UserDTO;
 import com.dsec.backend.model.user.UserUpdateDTO;
 import com.dsec.backend.service.UserService;
 import com.dsec.backend.specification.UserSpecification;
@@ -34,8 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping(value = "/users",
-        produces = {MediaType.APPLICATION_JSON_VALUE, MediaTypes.HAL_FORMS_JSON_VALUE})
+@RequestMapping(value = "/users")
 @Slf4j
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class UserController {
@@ -57,17 +53,17 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDTO> getMe(@AuthenticationPrincipal Jwt jwt) {
-        UserDTO userDTO = userAssembler.toModel(userService.fetch(jwt.<Long>getClaim("id")));
+    public ResponseEntity<UserEntity> getMe(@AuthenticationPrincipal Jwt jwt) {
+        UserEntity entity = userAssembler.toModel(userService.fetch(jwt.<Long>getClaim("id")));
 
-        return ResponseEntity.ok(userDTO);
+        return ResponseEntity.ok(entity);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getById(@PathVariable("id") long id) {
-        UserDTO userDTO = userAssembler.toModel(userService.fetch(id));
+    public ResponseEntity<UserEntity> getById(@PathVariable("id") long id) {
+        UserEntity entity = userAssembler.toModel(userService.fetch(id));
 
-        return ResponseEntity.ok(userDTO);
+        return ResponseEntity.ok(entity);
     }
 
     /**
@@ -85,7 +81,7 @@ public class UserController {
      * @return A page of users.
      */
     @GetMapping("")
-    public ResponseEntity<PagedModel<UserDTO>> getUsers(@PageableDefault Pageable pageable,
+    public ResponseEntity<PagedModel<UserEntity>> getUsers(@PageableDefault Pageable pageable,
             @RequestParam(value = "firstName", required = false) String firstName,
             @RequestParam(value = "lastName", required = false) String lastName,
             @RequestParam(value = "email", required = false) String email,
@@ -97,23 +93,23 @@ public class UserController {
 
         Page<UserEntity> pageUser = userService.findUsers(pageable, specs);
 
-        PagedModel<UserDTO> pageModel =
+        PagedModel<UserEntity> pageModel =
                 pagedResourcesAssembler.toModel(pageUser, userAssembler);
 
         return ResponseEntity.ok(pageModel);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<UserDTO> deleteUser(@PathVariable("id") long id,
+    public ResponseEntity<UserEntity> deleteUser(@PathVariable("id") long id,
             @AuthenticationPrincipal Jwt jwt) {
         UserEntity user = userService.deleteUser(id, jwt);
 
-        UserDTO userDTO = userAssembler.toModel(user);
-        return ResponseEntity.ok(userDTO);
+        user = userAssembler.toModel(user);
+        return ResponseEntity.ok(user);
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable("id") long id,
+    @PutMapping("/{id}")
+    public ResponseEntity<UserEntity> updateUser(@PathVariable("id") long id,
             @Valid UserUpdateDTO userUpdateDTO, @AuthenticationPrincipal Jwt jwt) {
 
         return ResponseEntity

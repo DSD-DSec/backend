@@ -6,19 +6,29 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.dsec.backend.model.user.UserRegisterDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonRootName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Builder
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserEntity {
+@Data
+@EqualsAndHashCode(callSuper = false)
+@JsonRootName(value = "user")
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Relation(collectionRelation = "users")
+public class UserEntity extends RepresentationModel<UserEntity> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)
@@ -34,6 +44,7 @@ public class UserEntity {
     private String email;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     @ManyToOne(optional = false)
@@ -47,5 +58,4 @@ public class UserEntity {
         password = passwordEncoder.encode(userRegisterDTO.getPassword());
         this.userRole = userRole;
     }
-
 }

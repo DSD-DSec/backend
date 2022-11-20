@@ -43,8 +43,7 @@ public class UserServiceImpl implements UserService {
 
 		UserRole roleEntity = roleRepository.getByRoleNameEquals(Role.USER);
 		if (roleEntity == null) {
-			roleEntity = new UserRole();
-			roleEntity.setRoleName(Role.USER);
+			roleEntity = UserRole.builder().roleName(Role.USER).build();
 			roleEntity = roleRepository.save(roleEntity);
 		}
 

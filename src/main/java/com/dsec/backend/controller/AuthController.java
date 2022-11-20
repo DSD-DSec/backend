@@ -4,8 +4,6 @@ import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.MediaTypes;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,15 +13,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.UserAssembler;
 import com.dsec.backend.model.user.LoginDTO;
-import com.dsec.backend.model.user.UserDTO;
 import com.dsec.backend.model.user.UserRegisterDTO;
 import com.dsec.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping(value = "/auth",
-		produces = {MediaType.APPLICATION_JSON_VALUE, MediaTypes.HAL_JSON_VALUE})
+@RequestMapping("/auth")
 @Slf4j
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class AuthController {
@@ -31,7 +27,7 @@ public class AuthController {
 	private final UserAssembler userAssembler;
 
 	@PostMapping("/register")
-	ResponseEntity<UserDTO> register(@Valid @RequestBody UserRegisterDTO userRegisterDTO) {
+	public ResponseEntity<UserEntity> register(@Valid @RequestBody UserRegisterDTO userRegisterDTO) {
 		log.debug("Register request from email: {}", userRegisterDTO.getEmail());
 
 		UserEntity entity = userService.register(userRegisterDTO);
@@ -43,7 +39,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<UserDTO> login(@Valid @RequestBody LoginDTO loginDTO,
+	public ResponseEntity<UserEntity> login(@Valid @RequestBody LoginDTO loginDTO,
 			HttpServletResponse response) {
 		log.debug("Login request from email: {}", loginDTO.getEmail());
 

@@ -5,68 +5,54 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.RepresentationModelAssemblerSupport;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import com.dsec.backend.controller.RoleController;
 import com.dsec.backend.controller.UserController;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.entity.UserRole;
-import com.dsec.backend.model.user.UserDTO;
-import com.dsec.backend.model.user.UserRoleDTO;
 
 @Component
-public class UserAssembler extends RepresentationModelAssemblerSupport<UserEntity, UserDTO> {
-    public UserAssembler() {
-        super(UserController.class, UserDTO.class);
-    }
+public class UserAssembler extends RepresentationModelAssemblerSupport<UserEntity, UserEntity> {
+        public UserAssembler() {
+                super(UserController.class, UserEntity.class);
+        }
 
-    @Override
-    public UserDTO toModel(UserEntity entity) {
-        UserDTO userDTO = UserDTO.builder().id(entity.getId())
-                .email(entity.getEmail()).firstName(entity.getFirstName())
-                .lastName(entity.getLastName()).userRole(toRoleModel(entity.getUserRole())).build();
+        @Override
+        public UserEntity toModel(UserEntity entity) {
+
+                Link link = linkTo(methodOn(UserController.class).getById(entity.getId()))
+                                .withSelfRel().withType(HttpMethod.GET.name());
+
+                var methodInvocation = methodOn(UserController.class);
+
+                entity.add(link);
+                entity.add(link.andAffordance(
+                                afford(methodOn(UserController.class).deleteUser(entity.getId(),
+                                                null)))
+                                .withRel("delete").withType(HttpMethod.DELETE.name()));
+                entity.add(link.andAffordance(
+                                afford(methodOn(UserController.class).updateUser(entity.getId(),
+                                                null, null)))
+                                .withRel("update").withType(HttpMethod.PUT.name()));
 
 
-        Link link = linkTo(methodOn(UserController.class).getById(entity.getId())).withSelfRel();
-        var methodInvocation = methodOn(UserController.class);
+                entity.add(linkTo(methodInvocation.getUsers(null, null, null, null, null, null))
+                                .withRel("users").withType(HttpMethod.GET.name()));
+                entity.add(linkTo(methodInvocation.getMe(null)).withRel("me")
+                                .withType(HttpMethod.GET.name()));
+                entity.add(linkTo(methodInvocation.logout(null, null)).withRel("logout")
+                                .withType(HttpMethod.POST.name()));
 
-        userDTO.add(link
-                .andAffordance(
-                        afford(methodInvocation.getMe(null)))
-                .withRel("me")
-                .andAffordance(
-                        afford(methodInvocation.logout(null, null)))
-                .withRel("logout")
-                .andAffordance(
-                        afford(methodInvocation.deleteUser(entity.getId(), null)))
-                .withRel("delete")
-                .andAffordance(
-                        afford(methodInvocation.updateUser(entity.getId(), null, null)))
-                .withRel("update"),
+                entity.setUserRole(toRoleModel(entity.getUserRole()));
 
-                linkTo(
-                        methodInvocation.getUsers(null, null, null, null, null, null))
-                                .withRel("users"));
+                return entity;
+        }
 
-        userDTO.setId(entity.getId());
-        userDTO.setFirstName(entity.getFirstName());
-        userDTO.setLastName(entity.getLastName());
-        userDTO.setUserRole(toRoleModel(entity.getUserRole()));
-        userDTO.setEmail(entity.getEmail());
-
-        return userDTO;
-    }
-
-    private UserRoleDTO toRoleModel(UserRole userRole) {
-        return addLinks(
-                UserRoleDTO.builder().id(userRole.getId()).roleName(userRole.getRoleName()).build(),
-                userRole);
-    }
-
-    private UserRoleDTO addLinks(UserRoleDTO dto, UserRole userRole) {
-        Link link = linkTo(
-                methodOn(RoleController.class)
-                        .getRole(userRole.getId())).withSelfRel();
-        return dto.add(link);
-    }
+        private UserRole toRoleModel(UserRole userRole) {
+                return userRole.add(linkTo(
+                                methodOn(RoleController.class)
+                                                .getRole(userRole.getId())).withSelfRel());
+        }
 
 }

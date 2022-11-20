@@ -6,27 +6,26 @@ import org.springframework.hateoas.server.mvc.RepresentationModelAssemblerSuppor
 import org.springframework.stereotype.Component;
 import com.dsec.backend.controller.RoleController;
 import com.dsec.backend.entity.UserRole;
-import com.dsec.backend.model.user.UserRoleDTO;
 
 @Component
-public class RoleAssembler extends RepresentationModelAssemblerSupport<UserRole, UserRoleDTO> {
+public class RoleAssembler extends RepresentationModelAssemblerSupport<UserRole, UserRole> {
 
     RoleAssembler() {
-        super(RoleController.class, UserRoleDTO.class);
+        super(RoleController.class, UserRole.class);
     }
 
     @Override
-    public UserRoleDTO toModel(UserRole entity) {
-        UserRoleDTO dto = createModelWithId(entity.getId(), entity);
+    public UserRole toModel(UserRole entity) {
 
-        dto.add(linkTo(
-                methodOn(RoleController.class)
-                        .getRoles()).withSelfRel());
+        entity.add(
+                linkTo(
+                        methodOn(RoleController.class).getRole(entity.getId())).withSelfRel(),
+                linkTo(
+                        methodOn(RoleController.class)
+                                .getRoles()).withSelfRel());
 
-        dto.setId(entity.getId());
-        dto.setRoleName(entity.getRoleName());
 
-        return dto;
+        return entity;
     }
 
 }
