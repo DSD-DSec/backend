@@ -54,7 +54,7 @@ public class SecurityFilterChainConfigurerDev {
 
                 .authorizeRequests((authorizeRequests) -> authorizeRequests
                         .antMatchers("/auth/**", "/h2-console/**", "/v3/api-docs*/**",
-                                "/swagger-ui*/**")
+                                "/swagger-ui*/**", "/", "/explorer*/**")
                         .permitAll()
                         .antMatchers("/**").access("hasAnyAuthority('SCOPE_USER','SCOPE_ADMIN')")
                         .anyRequest().authenticated())

@@ -1,89 +1,112 @@
 package com.dsec.backend.service;
 
-import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import com.dsec.backend.DTO.LoginInfoDTO;
-import com.dsec.backend.DTO.UserDTO;
-import com.dsec.backend.DTO.UserInfoDTO;
-import com.dsec.backend.model.Role;
-import com.dsec.backend.model.UserModel;
-import com.dsec.backend.model.UserRole;
+import com.dsec.backend.entity.Role;
+import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.entity.UserRole;
+import com.dsec.backend.exception.EntityMissingException;
+import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.model.user.LoginDTO;
+import com.dsec.backend.model.user.UserRegisterDTO;
+import com.dsec.backend.model.user.UserUpdateDTO;
 import com.dsec.backend.repository.RoleRepository;
 import com.dsec.backend.repository.UserRepository;
 import com.dsec.backend.security.UserPrincipal;
 import com.dsec.backend.util.cookie.CookieUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@Slf4j
 public class UserServiceImpl implements UserService {
 
-	private UserRepository userRepository;
-	private RoleRepository roleRepository;
+	private final UserRepository userRepository;
+	private final RoleRepository roleRepository;
 
-	private PasswordEncoder passwordEncoder;
-	private AuthenticationManager manager;
-	private CookieUtil cookieUtil;
-
-	@Autowired
-	public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository,
-			PasswordEncoder passwordEncoder, AuthenticationManager manager,
-			CookieUtil cookieUtil) {
-		this.userRepository = userRepository;
-		this.roleRepository = roleRepository;
-		this.passwordEncoder = passwordEncoder;
-		this.manager = manager;
-		this.cookieUtil = cookieUtil;
-	}
+	private final PasswordEncoder passwordEncoder;
+	private final AuthenticationManager manager;
+	private final CookieUtil cookieUtil;
 
 	@Override
-	public URI register(UserDTO userDTO) {
+	public UserEntity register(UserRegisterDTO userRegisterDTO) {
 
 		UserRole roleEntity = roleRepository.getByRoleNameEquals(Role.USER);
 		if (roleEntity == null) {
-			roleEntity = new UserRole(Role.USER);
+			roleEntity = new UserRole();
+			roleEntity.setRoleName(Role.USER);
 			roleEntity = roleRepository.save(roleEntity);
 		}
 
-		UserModel userModel = new UserModel(userDTO.firstName(), userDTO.lastName(),
-				userDTO.email(), passwordEncoder.encode(userDTO.password()), roleEntity);
+		UserEntity userModel = new UserEntity(userRegisterDTO, roleEntity, passwordEncoder);
 
-		userModel = userRepository.save(userModel);
-
-		return ServletUriComponentsBuilder.fromPath("api/users/{id}")
-				.buildAndExpand(userModel.getId()).toUri();
+		return userRepository.save(userModel);
 	}
 
 	@Override
-	public UserInfoDTO login(LoginInfoDTO dto, HttpServletResponse response) {
+	public UserEntity login(LoginDTO loginDTO, HttpServletResponse response) {
 
 		Authentication auth = manager
-				.authenticate(new UsernamePasswordAuthenticationToken(dto.email(), dto.password()));
+				.authenticate(new UsernamePasswordAuthenticationToken(loginDTO.getEmail(),
+						loginDTO.getPassword()));
 
 		UserPrincipal user = (UserPrincipal) auth.getPrincipal();
 
 		cookieUtil.createJwtCookie(response, user);
 
-		UserModel userModel = user.getUserModel();
-		return new UserInfoDTO(userModel.getId(), user.getUsername(), userModel.getFirstName(),
-				userModel.getLastName(), userModel.getUserRole());
+		return user.getUserEntity();
 	}
 
 	@Override
-	public UserInfoDTO getUser(Jwt user) {
+	public UserEntity fetch(long id) {
 
-		String username = user.getSubject();
+		return userRepository.findById(id)
+				.orElseThrow(() -> new EntityMissingException(UserEntity.class, id));
+	}
 
-		UserModel userModel = userRepository.findByEmailEquals(username).get(0);
+	@Override
+	public UserEntity deleteUser(long id, Jwt jwt) {
+		UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
-		return new UserInfoDTO(userModel.getId(), userModel.getEmail(),
-				userModel.getFirstName(), userModel.getLastName(), userModel.getUserRole());
+		if (!userJwt.getId().equals(id))
+			throw new ForbidenAccessException("Invalid user deletion.");
+
+		userRepository.deleteById(id);
+
+		return userJwt;
+	}
+
+	@Override
+	public Page<UserEntity> findUsers(Pageable pageable, Specification<UserEntity> specification) {
+		log.debug("Requesting users page {}", pageable.getPageNumber());
+
+		return userRepository.findAll(specification, pageable);
+	}
+
+	@Override
+	public UserEntity updateUser(long id, UserUpdateDTO userUpdateDTO, Jwt jwt) {
+		UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
+
+		if (!userJwt.getId().equals(id))
+			throw new ForbidenAccessException("Invalid user deletion.");
+
+		UserEntity userEntity = fetch(id);
+
+		userEntity.setEmail(userUpdateDTO.getEmail());
+		userEntity.setFirstName(userUpdateDTO.getFirstName());
+		userEntity.setLastName(userUpdateDTO.getLastName());
+
+		return userRepository.save(userEntity);
 	}
 
 }

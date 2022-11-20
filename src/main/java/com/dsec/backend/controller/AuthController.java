@@ -1,58 +1,55 @@
 package com.dsec.backend.controller;
 
-import java.util.List;
+import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.MediaTypes;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.dsec.backend.DTO.EmptyDTO;
-import com.dsec.backend.DTO.LoginInfoDTO;
-import com.dsec.backend.DTO.UserDTO;
-import com.dsec.backend.DTO.UserInfoDTO;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.hateoas.UserAssembler;
+import com.dsec.backend.model.user.LoginDTO;
+import com.dsec.backend.model.user.UserDTO;
+import com.dsec.backend.model.user.UserRegisterDTO;
 import com.dsec.backend.service.UserService;
-import com.jayway.jsonpath.internal.Utils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping(value = "/auth",
+		produces = {MediaType.APPLICATION_JSON_VALUE, MediaTypes.HAL_JSON_VALUE})
+@Slf4j
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class AuthController {
-	private final Logger logger = LoggerFactory.getLogger(getClass());
-
 	private final UserService userService;
-
-	@Autowired
-	public AuthController(UserService userService) {
-		this.userService = userService;
-	}
+	private final UserAssembler userAssembler;
 
 	@PostMapping("/register")
-	ResponseEntity<EmptyDTO> register(@RequestBody UserDTO userDTO) {
+	ResponseEntity<UserDTO> register(@Valid @RequestBody UserRegisterDTO userRegisterDTO) {
+		log.debug("Register request from email: {}", userRegisterDTO.getEmail());
 
-		// TODO auto validation?
-		List<String> validStrings =
-				List.of(userDTO.firstName(), userDTO.lastName(), userDTO.email(),
-						userDTO.password());
-		boolean isAnyEmpty =
-				validStrings.stream().map(s -> Utils.isEmpty(s)).reduce((a, b) -> a || b).get();
+		UserEntity entity = userService.register(userRegisterDTO);
 
-		if (isAnyEmpty) {
-			logger.debug(userDTO.toString());
+		URI uri = ServletUriComponentsBuilder.fromPath("api/users/{id}")
+				.buildAndExpand(entity.getId()).toUri();
 
-			return ResponseEntity.badRequest().build();
-		}
-
-		return ResponseEntity.created(userService.register(userDTO)).body(new EmptyDTO());
+		return ResponseEntity.created(uri).body(userAssembler.toModel(entity));
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<UserInfoDTO> token(@RequestBody LoginInfoDTO dto,
+	public ResponseEntity<UserDTO> login(@Valid @RequestBody LoginDTO loginDTO,
 			HttpServletResponse response) {
+		log.debug("Login request from email: {}", loginDTO.getEmail());
 
-		return ResponseEntity.ok(userService.login(dto, response));
+		UserEntity entity = userService.login(loginDTO, response);
+
+		return ResponseEntity.ok(userAssembler.toModel(entity));
 	}
 
 }
