@@ -1,6 +1,7 @@
 package com.dsec.backend.controller;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,23 +14,28 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.UserAssembler;
 import com.dsec.backend.model.EmptyDTO;
-import com.dsec.backend.model.UserDTO;
+import com.dsec.backend.model.user.UserDTO;
+import com.dsec.backend.model.user.UserUpdateDTO;
 import com.dsec.backend.service.UserService;
 import com.dsec.backend.specification.UserSpecification;
 import com.dsec.backend.util.cookie.CookieUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
 
 @RestController
 @RequestMapping(value = "/users",
-        produces = {MediaType.APPLICATION_JSON_VALUE, MediaTypes.HAL_JSON_VALUE})
+        produces = {MediaType.APPLICATION_JSON_VALUE, MediaTypes.HAL_FORMS_JSON_VALUE})
 @Slf4j
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class UserController {
@@ -41,7 +47,7 @@ public class UserController {
     private final PagedResourcesAssembler<UserEntity> pagedResourcesAssembler;
 
     @PostMapping("/logout")
-    ResponseEntity<EmptyDTO> logout(HttpServletResponse response,
+    public ResponseEntity<EmptyDTO> logout(HttpServletResponse response,
             @AuthenticationPrincipal Jwt jwt) {
         log.debug("Logout user {}", jwt.getSubject());
 
@@ -98,17 +104,20 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<UserDTO> deleteUser(@PathVariable("id") long id, @AuthenticationPrincipal Jwt jwt) throws IllegalAccessException {
+    public ResponseEntity<UserDTO> deleteUser(@PathVariable("id") long id,
+            @AuthenticationPrincipal Jwt jwt) {
         UserEntity user = userService.deleteUser(id, jwt);
 
         UserDTO userDTO = userAssembler.toModel(user);
         return ResponseEntity.ok(userDTO);
     }
 
-    // @PatchMapping("/{id}")
-    // public ResponseEntity<UserDTO> deleteUser(@PathVariable("id") long id,
-    // @AuthenticationPrincipal Jwt jwt) {
+    @PatchMapping("/{id}")
+    public ResponseEntity<UserDTO> updateUser(@PathVariable("id") long id,
+            @Valid UserUpdateDTO userUpdateDTO, @AuthenticationPrincipal Jwt jwt) {
 
-    // }
+        return ResponseEntity
+                .ok(userAssembler.toModel(userService.updateUser(id, userUpdateDTO, jwt)));
+    }
 
 }

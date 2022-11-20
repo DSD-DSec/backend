@@ -1,4 +1,4 @@
-package com.dsec.backend.model;
+package com.dsec.backend.model.user;
 
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;

@@ -2,7 +2,7 @@ package com.dsec.backend.validation;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-import com.dsec.backend.model.UserRegisterDTO;
+import com.dsec.backend.model.user.UserRegisterDTO;
 
 public class MatchPasswordValidator implements ConstraintValidator<MatchPassword, Object> {
 

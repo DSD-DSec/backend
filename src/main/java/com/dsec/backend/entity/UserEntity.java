@@ -7,7 +7,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import com.dsec.backend.model.UserRegisterDTO;
+import com.dsec.backend.model.user.UserRegisterDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

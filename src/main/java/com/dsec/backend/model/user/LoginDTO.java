@@ -1,4 +1,4 @@
-package com.dsec.backend.model;
+package com.dsec.backend.model.user;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;

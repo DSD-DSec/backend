@@ -6,9 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.oauth2.jwt.Jwt;
 import com.dsec.backend.entity.UserEntity;
-import com.dsec.backend.model.LoginDTO;
-import com.dsec.backend.model.UserDTO;
-import com.dsec.backend.model.UserRegisterDTO;
+import com.dsec.backend.model.user.LoginDTO;
+import com.dsec.backend.model.user.UserRegisterDTO;
+import com.dsec.backend.model.user.UserUpdateDTO;
 
 public interface UserService {
 
@@ -18,9 +18,9 @@ public interface UserService {
 
 	Page<UserEntity> findUsers(Pageable pageable, Specification<UserEntity> specification);
 
-	UserEntity updateUser(long id, UserDTO userDTO, Jwt jwt);
+	UserEntity updateUser(long id, UserUpdateDTO userUpdateDTO, Jwt jwt);
 
-	UserEntity deleteUser(long id, Jwt jwt) throws IllegalAccessException;
+	UserEntity deleteUser(long id, Jwt jwt);
 
 	UserEntity fetch(long id);
 

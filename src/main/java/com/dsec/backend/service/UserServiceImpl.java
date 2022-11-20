@@ -14,14 +14,15 @@ import org.springframework.stereotype.Service;
 import com.dsec.backend.entity.Role;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.entity.UserRole;
-import com.dsec.backend.model.LoginDTO;
-import com.dsec.backend.model.UserDTO;
-import com.dsec.backend.model.UserRegisterDTO;
+import com.dsec.backend.exception.EntityMissingException;
+import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.model.user.LoginDTO;
+import com.dsec.backend.model.user.UserRegisterDTO;
+import com.dsec.backend.model.user.UserUpdateDTO;
 import com.dsec.backend.repository.RoleRepository;
 import com.dsec.backend.repository.UserRepository;
 import com.dsec.backend.security.UserPrincipal;
 import com.dsec.backend.util.cookie.CookieUtil;
-import exception.EntityMissingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -74,13 +75,15 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserEntity deleteUser(long id, Jwt jwt) throws IllegalAccessException {
-		UserEntity user = userRepository.findByEmail(jwt.getSubject());
-		if (!user.getId().equals(id))
-			throw new IllegalAccessException("Invalid user deletion.");
+	public UserEntity deleteUser(long id, Jwt jwt) {
+		UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
-		userRepository.delete(user);
-		return user;
+		if (!userJwt.getId().equals(id))
+			throw new ForbidenAccessException("Invalid user deletion.");
+
+		userRepository.deleteById(id);
+
+		return userJwt;
 	}
 
 	@Override
@@ -91,36 +94,19 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserEntity updateUser(long id, UserDTO userDTO, Jwt jwt) {
-		// TODO Auto-generated method stub
+	public UserEntity updateUser(long id, UserUpdateDTO userUpdateDTO, Jwt jwt) {
+		UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
-		// try {
-		// if (id == userDTO.id()) {
-		// UserEntity userEntity = fetch(id);
-		// Jwt user =
-		// (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		// JSONObject userData = new JSONObject((String) user.getClaim("object"));
-		// System.out.println(userModel.getId());
-		// if (userData.getJSONObject("userModel").getInt("id") == userModel.getId()) {
-		// 
-		// userEntity.setFirstName(userDTO.firstName());
-		// userEntity.setLastName(userDTO.lastName());
-		// userEntity.setPassword(passwordEncoder.encode(userDTO.password()));
-		// userEntity.setEmail(userDTO.email());
-		// userRepository.save(userModel);
-		// return ResponseEntity.status(204).build();
-		// }
-		// }
+		if (!userJwt.getId().equals(id))
+			throw new ForbidenAccessException("Invalid user deletion.");
 
-		// return ResponseEntity.status(401).build();
+		UserEntity userEntity = fetch(id);
 
-		// } catch (Exception e) {
-		// return ResponseEntity.notFound().build();
-		// }
+		userEntity.setEmail(userUpdateDTO.getEmail());
+		userEntity.setFirstName(userUpdateDTO.getFirstName());
+		userEntity.setLastName(userUpdateDTO.getLastName());
 
-		return null;
+		return userRepository.save(userEntity);
 	}
-
-
 
 }

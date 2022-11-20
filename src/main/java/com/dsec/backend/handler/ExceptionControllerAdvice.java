@@ -16,8 +16,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import com.dsec.backend.exception.EntityMissingException;
-import com.dsec.backend.model.FieldErrorDTO;
-import com.dsec.backend.model.GlobalErrorDTO;
+import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.model.error.FieldErrorDTO;
+import com.dsec.backend.model.error.GlobalErrorDTO;
 
 @RestControllerAdvice
 public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
@@ -30,12 +31,12 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 				HttpStatus.UNAUTHORIZED);
 	}
 
-	@ExceptionHandler(IllegalAccessException.class)
-	public ResponseEntity<?> handleIllegalAccessException(IllegalAccessException e) {
+	@ExceptionHandler(ForbidenAccessException.class)
+	public ResponseEntity<?> handleIllegalAccessException(ForbidenAccessException e) {
 		e.printStackTrace();
 
-		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED),
-				HttpStatus.UNAUTHORIZED);
+		return new ResponseEntity<>(createProps(e, HttpStatus.FORBIDDEN),
+				HttpStatus.FORBIDDEN);
 	}
 
 	@ExceptionHandler(AuthenticationException.class)

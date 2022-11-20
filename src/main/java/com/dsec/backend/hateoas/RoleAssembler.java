@@ -6,7 +6,7 @@ import org.springframework.hateoas.server.mvc.RepresentationModelAssemblerSuppor
 import org.springframework.stereotype.Component;
 import com.dsec.backend.controller.RoleController;
 import com.dsec.backend.entity.UserRole;
-import com.dsec.backend.model.UserRoleDTO;
+import com.dsec.backend.model.user.UserRoleDTO;
 
 @Component
 public class RoleAssembler extends RepresentationModelAssemblerSupport<UserRole, UserRoleDTO> {
