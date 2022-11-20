@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -54,7 +55,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<UserEntity> getMe(@AuthenticationPrincipal Jwt jwt) {
-        UserEntity entity = userAssembler.toModel(userService.fetch(jwt.<Long>getClaim("id")));
+        UserEntity entity = userAssembler.toModel(userService.fetch(Long.parseLong(jwt.getClaim("id"))));
 
         return ResponseEntity.ok(entity);
     }
@@ -110,7 +111,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UserEntity> updateUser(@PathVariable("id") long id,
-            @Valid UserUpdateDTO userUpdateDTO, @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Jwt jwt, @RequestBody @Valid UserUpdateDTO userUpdateDTO) {
 
         return ResponseEntity
                 .ok(userAssembler.toModel(userService.updateUser(id, userUpdateDTO, jwt)));

@@ -6,8 +6,11 @@ import org.springframework.stereotype.Repository;
 import com.dsec.backend.entity.UserEntity;
 
 @Repository
-public interface UserRepository extends JpaRepository<UserEntity, Long>, JpaSpecificationExecutor<UserEntity> {
+public interface UserRepository
+        extends JpaRepository<UserEntity, Long>, JpaSpecificationExecutor<UserEntity> {
 
     UserEntity findByEmail(String email);
+
+    boolean existsByEmail(String email);
 
 }

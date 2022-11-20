@@ -101,6 +101,9 @@ public class UserServiceImpl implements UserService {
 
 		UserEntity userEntity = fetch(id);
 
+		if(!userJwt.getEmail().equals(userUpdateDTO.getEmail()) && userRepository.existsByEmail(userUpdateDTO.getEmail()))
+			
+
 		userEntity.setEmail(userUpdateDTO.getEmail());
 		userEntity.setFirstName(userUpdateDTO.getFirstName());
 		userEntity.setLastName(userUpdateDTO.getLastName());

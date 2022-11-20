@@ -4,8 +4,6 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
-
-import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.validation.MatchPassword;
 import com.dsec.backend.validation.PasswordPolicy;
 import com.dsec.backend.validation.UniqueEmail;
@@ -13,13 +11,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import org.springframework.hateoas.RepresentationModel;
 
 @MatchPassword
 @Data
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
-public class UserRegisterDTO extends RepresentationModel<UserEntity> {
+public class UserRegisterDTO  {
 
     @NotEmpty(message = "Please enter an email")
     @Email(message = "Email is not valid")

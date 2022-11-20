@@ -1,4 +1,6 @@
 package com.dsec.backend.model;
 
-public class EmptyDTO {
+import org.springframework.hateoas.RepresentationModel;
+
+public class EmptyDTO extends RepresentationModel<EmptyDTO> {
 }

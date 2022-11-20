@@ -52,7 +52,7 @@ public class SecurityFilterChainConfigurerProd {
                         .accessDeniedHandler(new BearerTokenAccessDeniedHandler()))
 
                 .authorizeRequests((authorizeRequests) -> authorizeRequests
-                        .antMatchers("/auth/**", "/v3/api-docs*/**")
+                        .antMatchers("/auth/**", "/v3/api-docs*/**", "/")
                         .permitAll()
                         .antMatchers("/swagger-ui*/**").denyAll()
                         .antMatchers("/**").access("hasAnyAuthority('SCOPE_USER','SCOPE_ADMIN')")

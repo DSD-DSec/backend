@@ -24,7 +24,6 @@ public class RoleAssembler extends RepresentationModelAssemblerSupport<UserRole,
                         methodOn(RoleController.class)
                                 .getRoles()).withSelfRel());
 
-
         return entity;
     }
 
