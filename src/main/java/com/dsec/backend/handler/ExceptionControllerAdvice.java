@@ -1,9 +1,8 @@
 package com.dsec.backend.handler;
 
-import com.dsec.backend.exception.EntityMissingException;
-import com.dsec.backend.exception.ForbidenAccessException;
-import com.dsec.backend.model.error.FieldErrorDTO;
-import com.dsec.backend.model.error.GlobalErrorDTO;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -13,20 +12,28 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.dsec.backend.exception.EntityMissingException;
+import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.model.error.ErrorDTO;
+import com.dsec.backend.model.error.FieldErrorDTO;
+import com.dsec.backend.model.error.GlobalErrorDTO;
+import com.dsec.backend.model.error.ValidationErrorDTO;
+
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @RestControllerAdvice
 public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(UsernameNotFoundException.class)
-	public ResponseEntity<?> handleUsernameNotFoundException(UsernameNotFoundException e) {
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
+	public ResponseEntity<ErrorDTO> handleUsernameNotFoundException(UsernameNotFoundException e) {
 		e.printStackTrace();
 
 		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED),
@@ -34,7 +41,8 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 	}
 
 	@ExceptionHandler(ForbidenAccessException.class)
-	public ResponseEntity<?> handleIllegalAccessException(ForbidenAccessException e) {
+	@ResponseStatus(HttpStatus.FORBIDDEN)
+	public ResponseEntity<ErrorDTO> handleIllegalAccessException(ForbidenAccessException e) {
 		e.printStackTrace();
 
 		return new ResponseEntity<>(createProps(e, HttpStatus.FORBIDDEN),
@@ -42,7 +50,8 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 	}
 
 	@ExceptionHandler(AuthenticationException.class)
-	public ResponseEntity<?> handleAuthenticationException(AuthenticationException e) {
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
+	public ResponseEntity<ErrorDTO> handleAuthenticationException(AuthenticationException e) {
 		e.printStackTrace();
 
 		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED),
@@ -50,20 +59,26 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 	}
 
 	@ExceptionHandler(EntityMissingException.class)
-	public ResponseEntity<?> handleEntityMissingException(EntityMissingException e) {
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+	public ResponseEntity<ErrorDTO> handleEntityMissingException(EntityMissingException e) {
 		e.printStackTrace();
 
 		return new ResponseEntity<>(createProps(e, HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
 	}
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<?> handleDataIntegrityException(DataIntegrityViolationException e) {
+	@ResponseStatus(HttpStatus.FORBIDDEN)
+	public ResponseEntity<ErrorDTO> handleDataIntegrityException(DataIntegrityViolationException e) {
 		e.printStackTrace();
 
 		return new ResponseEntity<>(createProps(e, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
 	}
 
+	
 	@Override
+	@ApiResponse(responseCode = "400", description  = "Bad request",
+	content = { @Content(mediaType = "application/json",
+	schema = @Schema(implementation = ValidationErrorDTO.class)) })
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(
 			MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status,
 			WebRequest request) {
@@ -83,21 +98,25 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 				new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
 	}
 
+	private ErrorDTO createProps(Exception e, HttpStatus status) {
+		ErrorDTO errorDTO = new ErrorDTO();
+		errorDTO.setMessage(e.getMessage());
+		errorDTO.setStatus(status.getReasonPhrase());
+		errorDTO.setCode(String.valueOf(status.value()));
 
-	private Map<String, Object> createProps(Exception e, HttpStatus status) {
-		Map<String, Object> props = new HashMap<>();
-		props.put("message", e.getMessage());
-		props.put("status", status.getReasonPhrase());
-		props.put("code", String.valueOf(status.value()));
-
-		return props;
+		return errorDTO;
 	}
 
-	private Map<String, Object> createProps(Exception e, HttpStatus status,
+	private ValidationErrorDTO createProps(Exception e, HttpStatus status,
 			List<FieldErrorDTO> fieldErrorDTOs, List<GlobalErrorDTO> globalErrors) {
-		Map<String, Object> props = createProps(e, status);
-		props.put("fieldErors", fieldErrorDTOs);
-		props.put("globalErrors", globalErrors);
+		ErrorDTO errorDTO = createProps(e, status);
+
+		ValidationErrorDTO props = new ValidationErrorDTO();
+		props.setMessage(errorDTO.getMessage());
+		props.setCode(errorDTO.getCode());
+		props.setStatus(errorDTO.getStatus());
+		props.setFieldErrors(fieldErrorDTOs);
+		props.setGlobalErrors(globalErrors);
 
 		return props;
 	}

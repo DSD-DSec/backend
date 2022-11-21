@@ -2,9 +2,10 @@ package com.dsec.backend.validation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
+
 import org.passay.CharacterCharacteristicsRule;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;

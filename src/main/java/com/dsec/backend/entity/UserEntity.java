@@ -1,17 +1,27 @@
 package com.dsec.backend.entity;
 
-import com.dsec.backend.model.user.UserRegisterDTO;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonRootName;
-import lombok.*;
-import org.hibernate.Hibernate;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import javax.persistence.*;
-import java.util.Objects;
+import com.dsec.backend.model.user.UserRegisterDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonRootName;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @ToString
@@ -52,18 +62,5 @@ public class UserEntity extends RepresentationModel<UserEntity> {
         email = userRegisterDTO.getEmail();
         password = passwordEncoder.encode(userRegisterDTO.getPassword());
         this.userRole = userRole;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        UserEntity that = (UserEntity) o;
-        return id != null && Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
     }
 }
