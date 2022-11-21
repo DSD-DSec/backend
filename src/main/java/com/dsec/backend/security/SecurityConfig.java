@@ -32,8 +32,8 @@ import com.nimbusds.jose.proc.SecurityContext;
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig {
 
-	private RSAPublicKey key;
-	private RSAPrivateKey priv;
+	private final RSAPublicKey key;
+	private final RSAPrivateKey priv;
 
 	public SecurityConfig(@Value("${jwt.public.key}") RSAPublicKey key,
 			@Value("${jwt.private.key}") RSAPrivateKey priv,
@@ -43,13 +43,12 @@ public class SecurityConfig {
 		this.corsOrigins = corsOrigins;
 	}
 
-	private String corsOrigins;
+	private final String corsOrigins;
 
 	@Bean
 	public WebSecurityCustomizer webSecurityCustomizer() {
-		WebSecurityCustomizer websc = (web) -> {
+		return (web) -> {
 		};
-		return websc;
 	}
 
 	@Bean

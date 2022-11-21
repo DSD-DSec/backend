@@ -1,17 +1,16 @@
 package com.dsec.backend.security;
 
-import java.io.IOException;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.dsec.backend.util.cookie.CookieUtil;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import com.dsec.backend.util.cookie.CookieUtil;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class MyAuthenticationEntryPoint implements AuthenticationEntryPoint {
-    private BearerTokenAuthenticationEntryPoint bearerAuthEntryPoint;
-    private CookieUtil cookieUtil;
+    private final BearerTokenAuthenticationEntryPoint bearerAuthEntryPoint;
+    private final CookieUtil cookieUtil;
 
     public MyAuthenticationEntryPoint(CookieUtil cookieUtil) {
         bearerAuthEntryPoint = new BearerTokenAuthenticationEntryPoint();
@@ -20,7 +19,7 @@ public class MyAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
-            AuthenticationException authException) throws IOException, ServletException {
+            AuthenticationException authException) {
 
         cookieUtil.deleteJwtCookie(response);
 

@@ -1,16 +1,5 @@
 package com.dsec.backend.service;
 
-import javax.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.stereotype.Service;
 import com.dsec.backend.entity.Role;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.entity.UserRole;
@@ -25,6 +14,18 @@ import com.dsec.backend.security.UserPrincipal;
 import com.dsec.backend.util.cookie.CookieUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+
+import javax.servlet.http.HttpServletResponse;
 
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -100,9 +101,6 @@ public class UserServiceImpl implements UserService {
 			throw new ForbidenAccessException("Invalid user deletion.");
 
 		UserEntity userEntity = fetch(id);
-
-		if(!userJwt.getEmail().equals(userUpdateDTO.getEmail()) && userRepository.existsByEmail(userUpdateDTO.getEmail()))
-			
 
 		userEntity.setEmail(userUpdateDTO.getEmail());
 		userEntity.setFirstName(userUpdateDTO.getFirstName());

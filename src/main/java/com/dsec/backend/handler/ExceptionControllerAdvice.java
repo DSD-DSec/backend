@@ -1,9 +1,10 @@
 package com.dsec.backend.handler;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.dsec.backend.exception.EntityMissingException;
+import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.model.error.FieldErrorDTO;
+import com.dsec.backend.model.error.GlobalErrorDTO;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,10 +16,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-import com.dsec.backend.exception.EntityMissingException;
-import com.dsec.backend.exception.ForbidenAccessException;
-import com.dsec.backend.model.error.FieldErrorDTO;
-import com.dsec.backend.model.error.GlobalErrorDTO;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
@@ -52,6 +54,13 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 		e.printStackTrace();
 
 		return new ResponseEntity<>(createProps(e, HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<?> handleDataIntegrityException(DataIntegrityViolationException e) {
+		e.printStackTrace();
+
+		return new ResponseEntity<>(createProps(e, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
 	}
 
 	@Override

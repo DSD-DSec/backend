@@ -33,7 +33,7 @@ public class UserSpecification {
             if (firstName == null)
                 return builder.conjunction();// don't filter if null
 
-            return builder.like(builder.lower(root.<String>get("firstName")),
+            return builder.like(builder.lower(root.get("firstName")),
                     "%" + firstName.toLowerCase() + "%");
         };
     }
@@ -43,7 +43,7 @@ public class UserSpecification {
             if (lastName == null)
                 return builder.conjunction();// don't filter if null
 
-            return builder.like(builder.lower(root.<String>get("lastName")),
+            return builder.like(builder.lower(root.get("lastName")),
                     "%" + lastName.toLowerCase() + "%");
         };
     }
@@ -53,7 +53,7 @@ public class UserSpecification {
             if (email == null)
                 return builder.conjunction();// don't filter if null
 
-            return builder.like(builder.lower(root.<String>get("email")),
+            return builder.like(builder.lower(root.get("email")),
                     "%" + email.toLowerCase() + "%");
         };
     }

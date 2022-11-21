@@ -1,5 +1,6 @@
 package com.dsec.backend.security;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import com.dsec.backend.entity.UserRole;
 
 public class UserPrincipal implements UserDetails {
 
+    @Serial
     private static final long serialVersionUID = -6328324723198029932L;
 
     private final UserEntity userEntity;

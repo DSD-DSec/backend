@@ -14,7 +14,7 @@ import com.dsec.backend.security.UserPrincipal;
 @Component
 public class JwtUtil {
 
-    private JwtEncoder jwtEncoder;
+    private final JwtEncoder jwtEncoder;
 
     @Autowired
     public JwtUtil(JwtEncoder jwtEncoder) {

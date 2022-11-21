@@ -42,7 +42,7 @@ public class PasswordPolicyValidator implements ConstraintValidator<PasswordPoli
 
 		if(ruleResult.isValid()) return true;
 
-		String message = passwordValidator.getMessages(ruleResult).stream().collect(Collectors.joining("] | ["));
+		String message = String.join("] | [", passwordValidator.getMessages(ruleResult));
 
 		context.buildConstraintViolationWithTemplate(message).addConstraintViolation();
 

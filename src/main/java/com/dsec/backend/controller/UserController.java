@@ -69,7 +69,7 @@ public class UserController {
 
     /**
      * Searches for users.
-     * 
+     * <p>
      * Enables lazy loading (similar to listing pages of a book - display first 10 pages at first
      * request, then display next 10 pages at next request etc.).
      *

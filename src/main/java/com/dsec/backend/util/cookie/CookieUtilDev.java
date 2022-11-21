@@ -14,9 +14,9 @@ import com.dsec.backend.util.JwtUtil;
 @Profile("dev")
 public class CookieUtilDev implements CookieUtil {
 
-    private JwtUtil jwtUtil;
-    private long jwtExpiry;
-    private String cookieName;
+    private final JwtUtil jwtUtil;
+    private final long jwtExpiry;
+    private final String cookieName;
 
     @Autowired
     public CookieUtilDev(JwtUtil jwtUtil, @Value("${jwt.expiration}") long jwtExpiry,

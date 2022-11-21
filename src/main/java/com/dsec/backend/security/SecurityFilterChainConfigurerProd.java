@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
@@ -21,10 +22,10 @@ import com.dsec.backend.util.cookie.CookieUtil;
 @Configuration
 @Profile("prod")
 public class SecurityFilterChainConfigurerProd {
-    private String cookieName;
+    private final String cookieName;
 
-    private UserDetailsService myUserDetailsService;
-    private CookieUtil cookieUtil;
+    private final UserDetailsService myUserDetailsService;
+    private final CookieUtil cookieUtil;
 
     @Autowired
     public SecurityFilterChainConfigurerProd(@Value("${jwt.cookie.name}") String cookieName,
@@ -37,7 +38,7 @@ public class SecurityFilterChainConfigurerProd {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        return http.cors().and().csrf(csrf -> csrf.disable())
+        return http.cors().and().csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(
                         (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
@@ -79,7 +80,7 @@ public class SecurityFilterChainConfigurerProd {
                         .findAny();
             }
 
-            if (!cookie.isEmpty()) {
+            if (cookie.isPresent()) {
                 return cookie.get().getValue();
             }
 

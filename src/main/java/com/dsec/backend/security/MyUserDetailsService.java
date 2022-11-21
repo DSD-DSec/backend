@@ -11,7 +11,7 @@ import com.dsec.backend.repository.UserRepository;
 @Service
 public class MyUserDetailsService implements UserDetailsService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public MyUserDetailsService(UserRepository userRepository) {
