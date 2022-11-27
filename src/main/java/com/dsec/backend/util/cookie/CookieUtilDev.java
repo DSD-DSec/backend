@@ -11,7 +11,7 @@ import com.dsec.backend.security.UserPrincipal;
 import com.dsec.backend.util.JwtUtil;
 
 @Component
-@Profile("dev")
+@Profile({"dev", "test"})
 public class CookieUtilDev implements CookieUtil {
 
     private final JwtUtil jwtUtil;

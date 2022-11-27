@@ -20,7 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import com.dsec.backend.util.cookie.CookieUtil;
 
 @Configuration
-@Profile("dev")
+@Profile({"dev", "test"})
 public class SecurityFilterChainConfigurerDev {
 
     private final String cookieName;
