@@ -39,10 +39,10 @@ public class UserEntity extends RepresentationModel<UserEntity> {
     @Column(nullable = false)
     private Long id;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 32)
     private String firstName;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 32)
     private String lastName;
 
     @Column(nullable = false, length = 320, unique = true)
@@ -51,6 +51,10 @@ public class UserEntity extends RepresentationModel<UserEntity> {
     @Column(nullable = false)
     @JsonIgnore
     private String password;
+
+    @Column(nullable = true)
+    @JsonIgnore
+    private String token;
 
     @ManyToOne(optional = false)
     private UserRole userRole;

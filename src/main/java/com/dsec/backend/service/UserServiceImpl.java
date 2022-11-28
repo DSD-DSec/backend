@@ -1,5 +1,19 @@
 package com.dsec.backend.service;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+
 import com.dsec.backend.entity.Role;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.entity.UserRole;
@@ -11,21 +25,11 @@ import com.dsec.backend.model.user.UserUpdateDTO;
 import com.dsec.backend.repository.RoleRepository;
 import com.dsec.backend.repository.UserRepository;
 import com.dsec.backend.security.UserPrincipal;
+import com.dsec.backend.util.EncryptionUtil;
 import com.dsec.backend.util.cookie.CookieUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.stereotype.Service;
-
-import javax.servlet.http.HttpServletResponse;
 
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -38,6 +42,10 @@ public class UserServiceImpl implements UserService {
 	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManager manager;
 	private final CookieUtil cookieUtil;
+	private final EncryptionUtil encryptionUtil;
+
+	@Value("${encryption.key}")
+	private String encryptionKey;
 
 	@Override
 	public UserEntity register(UserRegisterDTO userRegisterDTO) {
@@ -107,6 +115,39 @@ public class UserServiceImpl implements UserService {
 		userEntity.setLastName(userUpdateDTO.getLastName());
 
 		return userRepository.save(userEntity);
+	}
+
+	@Override
+	public void saveToken(Jwt jwt, String token) {
+
+		UserEntity user = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
+
+		user = fetch(user.getId());
+
+		try {
+			user.setToken(encryptionUtil.encrypt(token.getBytes(), encryptionKey));
+			userRepository.save(user);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public String getToken(Jwt jwt) {
+		UserEntity user = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
+
+		return getToken(user);
+	}
+
+	@Override
+	public String getToken(UserEntity user) {
+		user = fetch(user.getId());
+
+		try {
+			return encryptionUtil.decrypt(user.getToken(), encryptionKey);
+		} catch (Exception e) {
+			throw new ForbidenAccessException(e);
+		}
 	}
 
 }
