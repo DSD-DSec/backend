@@ -1,5 +1,7 @@
 package com.dsec.backend.controller;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.UserAssembler;
 import com.dsec.backend.model.EmptyDTO;
+import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.user.UserUpdateDTO;
 import com.dsec.backend.service.UserService;
 import com.dsec.backend.specification.UserSpecification;
@@ -119,6 +122,11 @@ public class UserController {
 
         return ResponseEntity
                 .ok(userAssembler.toModel(userService.updateUser(id, userUpdateDTO, jwt)));
+    }
+
+    @GetMapping("/{id}/repos")
+    public ResponseEntity<List<RepoDTO>> getRepos(@PathVariable("id") long id, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(userService.getRepos(id, jwt));
     }
 
 }

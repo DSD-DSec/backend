@@ -1,11 +1,16 @@
 package com.dsec.backend.service;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.oauth2.jwt.Jwt;
+
 import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.user.LoginDTO;
 import com.dsec.backend.model.user.UserRegisterDTO;
 import com.dsec.backend.model.user.UserUpdateDTO;
@@ -29,4 +34,6 @@ public interface UserService {
 	String getToken(Jwt jwt);
 
 	String getToken(UserEntity user);
+
+    List<RepoDTO> getRepos(long id, Jwt jwt);
 }

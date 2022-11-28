@@ -1,7 +1,11 @@
 package com.dsec.backend.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -19,6 +23,7 @@ import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.entity.UserRole;
 import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.user.LoginDTO;
 import com.dsec.backend.model.user.UserRegisterDTO;
 import com.dsec.backend.model.user.UserUpdateDTO;
@@ -148,6 +153,15 @@ public class UserServiceImpl implements UserService {
 		} catch (Exception e) {
 			throw new ForbidenAccessException(e);
 		}
+	}
+
+	@Override
+	public List<RepoDTO> getRepos(long id, Jwt jwt) {
+		return fetch(id).getRepos().stream().map(r -> {
+			RepoDTO repoDTO = new RepoDTO();
+			BeanUtils.copyProperties(r,repoDTO);
+			return repoDTO;
+		}).collect(Collectors.toList());
 	}
 
 }
