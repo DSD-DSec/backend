@@ -65,3 +65,5 @@ jobs:
           heroku_app_name: "dsec-backend-staging" #Must be unique in Heroku
           heroku_email: "jan.rocek@fer.hr"
       
+
+      
