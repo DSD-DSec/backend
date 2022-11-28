@@ -64,7 +64,7 @@ public class CookieUtilProd implements CookieUtil {
         response.addHeader(HttpHeaders.SET_COOKIE,
                 ResponseCookie.from(name, value)
                         .httpOnly(true).path("/api")
-                        .maxAge(maxAge).secure(true).sameSite("None").build().toString());
+                        .maxAge(maxAge).secure(true).sameSite("Lax").build().toString());
     }
 
     @Override
