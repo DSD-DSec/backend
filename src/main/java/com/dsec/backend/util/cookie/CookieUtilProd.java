@@ -33,7 +33,7 @@ public class CookieUtilProd implements CookieUtil {
         this.jwtUtil = jwtUtil;
         this.jwtExpiry = jwtExpiry;
         this.cookieName = cookieName;
-        this.domain = backendUrl.split("://")[2];
+        this.domain = backendUrl.split("://")[1];
     }
 
     @Override
