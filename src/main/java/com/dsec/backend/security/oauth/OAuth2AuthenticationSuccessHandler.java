@@ -55,9 +55,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 authToken.getName());
         OAuth2AccessToken token = client.getAccessToken();
 
-        log.info("token={}", token.getTokenValue());
-
-        String targetUrl = determineTargetUrl(request, response);
+        String targetUrl = determineTargetUrl(request, response, authentication);
 
         Optional<Cookie> cookie = cookieUtil.getCookie(request, cookieName);
 
