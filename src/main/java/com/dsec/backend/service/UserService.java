@@ -24,4 +24,9 @@ public interface UserService {
 
 	UserEntity fetch(long id);
 
+	void saveToken(Jwt jwt, String token);
+
+	String getToken(Jwt jwt);
+
+	String getToken(UserEntity user);
 }

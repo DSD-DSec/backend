@@ -1,7 +1,9 @@
 package com.dsec.backend.controller;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.UserAssembler;
 import com.dsec.backend.model.EmptyDTO;
@@ -28,6 +31,7 @@ import com.dsec.backend.model.user.UserUpdateDTO;
 import com.dsec.backend.service.UserService;
 import com.dsec.backend.specification.UserSpecification;
 import com.dsec.backend.util.cookie.CookieUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,11 +48,11 @@ public class UserController {
     private final PagedResourcesAssembler<UserEntity> pagedResourcesAssembler;
 
     @PostMapping("/logout")
-    public ResponseEntity<EmptyDTO> logout(HttpServletResponse response,
+    public ResponseEntity<EmptyDTO> logout(HttpServletRequest request, HttpServletResponse response,
             @AuthenticationPrincipal Jwt jwt) {
         log.debug("Logout user {}", jwt.getSubject());
 
-        cookieUtil.deleteJwtCookie(response);
+        cookieUtil.deleteJwtCookie(request, response);
 
         return ResponseEntity.ok(new EmptyDTO());
     }
@@ -70,15 +74,17 @@ public class UserController {
     /**
      * Searches for users.
      * <p>
-     * Enables lazy loading (similar to listing pages of a book - display first 10 pages at first
+     * Enables lazy loading (similar to listing pages of a book - display first 10
+     * pages at first
      * request, then display next 10 pages at next request etc.).
      *
-     * @param pageable Represents a page of users.
-     * @param firstName Represents a firstName that should be searched for.
-     * @param lastName Represents a lastName that should be searched for.
-     * @param email Represents a email that should be searched for.
-     * @param generalSearch Space delimited strings that will be searched for in each of firstName,
-     *        lastName and email categories.
+     * @param pageable      Represents a page of users.
+     * @param firstName     Represents a firstName that should be searched for.
+     * @param lastName      Represents a lastName that should be searched for.
+     * @param email         Represents a email that should be searched for.
+     * @param generalSearch Space delimited strings that will be searched for in
+     *                      each of firstName,
+     *                      lastName and email categories.
      * @return A page of users.
      */
     @GetMapping("")
@@ -89,13 +95,11 @@ public class UserController {
             @RequestParam(value = "generalSearch", required = false) String generalSearch,
             @AuthenticationPrincipal Jwt jwt) {
 
-        Specification<UserEntity> specs =
-                userSpecification.geSpecification(firstName, lastName, email, generalSearch);
+        Specification<UserEntity> specs = userSpecification.geSpecification(firstName, lastName, email, generalSearch);
 
         Page<UserEntity> pageUser = userService.findUsers(pageable, specs);
 
-        PagedModel<UserEntity> pageModel =
-                pagedResourcesAssembler.toModel(pageUser, userAssembler);
+        PagedModel<UserEntity> pageModel = pagedResourcesAssembler.toModel(pageUser, userAssembler);
 
         return ResponseEntity.ok(pageModel);
     }

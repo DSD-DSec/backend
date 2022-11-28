@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.dsec.backend.exception.EntityAlreadyExistsException;
 import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.exception.ForbidenAccessException;
 import com.dsec.backend.model.error.ErrorDTO;
@@ -58,6 +59,14 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 				HttpStatus.UNAUTHORIZED);
 	}
 
+	@ExceptionHandler(EntityAlreadyExistsException.class)
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+	public ResponseEntity<ErrorDTO> handleEntityAlreadyExistsException(EntityAlreadyExistsException e) {
+		e.printStackTrace();
+
+		return new ResponseEntity<>(createProps(e, HttpStatus.CONFLICT), HttpStatus.CONFLICT);
+	}
+
 	@ExceptionHandler(EntityMissingException.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)
 	public ResponseEntity<ErrorDTO> handleEntityMissingException(EntityMissingException e) {
@@ -74,11 +83,9 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(createProps(e, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
 	}
 
-	
 	@Override
-	@ApiResponse(responseCode = "400", description  = "Bad request",
-	content = { @Content(mediaType = "application/json",
-	schema = @Schema(implementation = ValidationErrorDTO.class)) })
+	@ApiResponse(responseCode = "400", description = "Bad request", content = {
+			@Content(mediaType = "application/json", schema = @Schema(implementation = ValidationErrorDTO.class)) })
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(
 			MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status,
 			WebRequest request) {
