@@ -64,7 +64,7 @@ public class CookieUtilProd implements CookieUtil {
         response.addHeader(HttpHeaders.SET_COOKIE,
                 ResponseCookie.from(name, value)
                         .httpOnly(true).path("/api")
-                        .maxAge(maxAge).secure(true).sameSite("Lax").build().toString());
+                        .maxAge(maxAge).secure(true).sameSite("None").build().toString());
     }
 
     @Override
@@ -75,7 +75,7 @@ public class CookieUtilProd implements CookieUtil {
                 if (cookie.getName().equals(name)) {
                     response.addHeader(HttpHeaders.SET_COOKIE,
                             ResponseCookie.from(name, "").httpOnly(true).path("/api")
-                                    .maxAge(0).secure(true).sameSite("Lax").build().toString());
+                                    .maxAge(0).secure(true).sameSite("None").build().toString());
                 }
             }
         }
