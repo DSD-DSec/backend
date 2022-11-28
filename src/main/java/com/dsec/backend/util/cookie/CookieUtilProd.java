@@ -75,7 +75,7 @@ public class CookieUtilProd implements CookieUtil {
                 if (cookie.getName().equals(name)) {
                     response.addHeader(HttpHeaders.SET_COOKIE,
                             ResponseCookie.from(name, "").httpOnly(true).path("/api")
-                                    .maxAge(0).secure(true).sameSite("None").build().toString());
+                                    .maxAge(0).secure(true).sameSite("Lax").build().toString());
                 }
             }
         }
