@@ -25,7 +25,7 @@ public class CookieUtilProd implements CookieUtil {
     private final JwtUtil jwtUtil;
     private final long jwtExpiry;
     private final String cookieName;
-    private final String backendUrl;
+    private final String domain;
 
     @Autowired
     public CookieUtilProd(JwtUtil jwtUtil, @Value("${jwt.expiration}") long jwtExpiry,
@@ -33,7 +33,7 @@ public class CookieUtilProd implements CookieUtil {
         this.jwtUtil = jwtUtil;
         this.jwtExpiry = jwtExpiry;
         this.cookieName = cookieName;
-        this.backendUrl = backendUrl;
+        this.domain = backendUrl.split("://")[2];
     }
 
     @Override
@@ -65,7 +65,7 @@ public class CookieUtilProd implements CookieUtil {
     public void addCookie(HttpServletResponse response, String name, String value, long maxAge) {
         response.addHeader(HttpHeaders.SET_COOKIE,
                 ResponseCookie.from(name, value)
-                        .httpOnly(true).path("/api").domain(backendUrl)
+                        .httpOnly(true).path("/api").domain(domain)
                         .maxAge(maxAge).secure(true).sameSite("None").build().toString());
     }
 
@@ -76,7 +76,7 @@ public class CookieUtilProd implements CookieUtil {
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals(name)) {
                     response.addHeader(HttpHeaders.SET_COOKIE,
-                            ResponseCookie.from(name, "").httpOnly(true).path("/api").domain(backendUrl)
+                            ResponseCookie.from(name, "").httpOnly(true).path("/api").domain(domain)
                                     .maxAge(0).secure(true).sameSite("None").build().toString());
                 }
             }
