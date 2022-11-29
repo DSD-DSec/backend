@@ -65,6 +65,7 @@ public class UserEntity extends RepresentationModel<UserEntity> {
 
     @Builder.Default
     @ManyToMany(mappedBy = "users", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Repo> repos = new java.util.LinkedHashSet<>();
 
     public UserEntity(UserRegisterDTO userRegisterDTO, UserRole userRole,
