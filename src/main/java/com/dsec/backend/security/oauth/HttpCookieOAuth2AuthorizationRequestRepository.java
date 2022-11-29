@@ -47,6 +47,9 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         String idToken = request.getParameter(TOKEN_COOKIE_NAME);
         if (StringUtils.isNotBlank(redirectUriAfterLogin)) {
             cookieUtil.addCookie(response, REDIRECT_URI_PARAM_COOKIE_NAME, redirectUriAfterLogin, cookieExpireSeconds);
+        }
+
+        if(StringUtils.isNotBlank(idToken)){
             cookieUtil.addCookie(response, TOKEN_COOKIE_NAME, idToken, cookieExpireSeconds);
         }
     }
