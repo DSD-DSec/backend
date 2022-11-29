@@ -31,6 +31,7 @@ import com.dsec.backend.repository.RoleRepository;
 import com.dsec.backend.repository.UserRepository;
 import com.dsec.backend.security.UserPrincipal;
 import com.dsec.backend.util.EncryptionUtil;
+import com.dsec.backend.util.JwtUtil;
 import com.dsec.backend.util.cookie.CookieUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ public class UserServiceImpl implements UserService {
 	private final AuthenticationManager manager;
 	private final CookieUtil cookieUtil;
 	private final EncryptionUtil encryptionUtil;
+	private final JwtUtil jwtUtil;
 
 	@Value("${encryption.key}")
 	private String encryptionKey;
@@ -123,11 +125,9 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public void saveToken(Jwt jwt, String token) {
+	public void saveToken(Long id, String token) {
 
-		UserEntity user = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
-
-		user = fetch(user.getId());
+		UserEntity user = fetch(id);
 
 		try {
 			user.setToken(encryptionUtil.encrypt(token.getBytes(), encryptionKey));
@@ -159,9 +159,14 @@ public class UserServiceImpl implements UserService {
 	public List<RepoDTO> getRepos(long id, Jwt jwt) {
 		return fetch(id).getRepos().stream().map(r -> {
 			RepoDTO repoDTO = new RepoDTO();
-			BeanUtils.copyProperties(r,repoDTO);
+			BeanUtils.copyProperties(r, repoDTO);
 			return repoDTO;
 		}).collect(Collectors.toList());
+	}
+
+	@Override
+	public String getOAuthtoken(Jwt jwt) {
+		return jwtUtil.getOAuthToken(UserPrincipal.fromClaims(jwt.getClaims()), Long.valueOf(180));
 	}
 
 }

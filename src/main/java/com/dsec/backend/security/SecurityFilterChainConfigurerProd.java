@@ -74,7 +74,7 @@ public class SecurityFilterChainConfigurerProd {
                         .accessDeniedHandler(new BearerTokenAccessDeniedHandler()))
 
                 .authorizeRequests((authorizeRequests) -> authorizeRequests
-                        .antMatchers("/auth/**", "/v3/api-docs*/**", "/", "/github/webhook")
+                        .antMatchers("/auth/**", "/v3/api-docs*/**", "/", "/github/webhook", "/login/oauth2/code/github*/**")
                         .permitAll()
                         .antMatchers("/swagger-ui*/**").denyAll()
                         .antMatchers("/**").access("hasAnyAuthority('SCOPE_USER','SCOPE_ADMIN')")

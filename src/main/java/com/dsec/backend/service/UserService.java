@@ -29,11 +29,13 @@ public interface UserService {
 
 	UserEntity fetch(long id);
 
-	void saveToken(Jwt jwt, String token);
+	void saveToken(Long id, String token);
 
 	String getToken(Jwt jwt);
 
 	String getToken(UserEntity user);
 
     List<RepoDTO> getRepos(long id, Jwt jwt);
+
+    String getOAuthtoken(Jwt jwt);
 }

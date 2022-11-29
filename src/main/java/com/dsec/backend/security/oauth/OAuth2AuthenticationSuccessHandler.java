@@ -3,24 +3,25 @@ package com.dsec.backend.security.oauth;
 import java.io.IOException;
 import java.util.Optional;
 
+import javax.naming.AuthenticationException;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.dsec.backend.exception.ForbidenAccessException;
 import com.dsec.backend.service.UserService;
+import com.dsec.backend.util.JwtUtil;
 import com.dsec.backend.util.cookie.CookieUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -35,10 +36,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final OAuth2AuthorizedClientService clientService;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
     private final CookieUtil cookieUtil;
-    private final JwtDecoder jwtDecoder;
-
-    @Value("${jwt.cookie.name}")
-    private String cookieName;
+    private final JwtUtil jwtUtil;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -57,9 +55,24 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         String targetUrl = determineTargetUrl(request, response, authentication);
 
-        Optional<Cookie> cookie = cookieUtil.getCookie(request, cookieName);
+        Optional<Cookie> cookie = cookieUtil.getCookie(request,
+                HttpCookieOAuth2AuthorizationRequestRepository.TOKEN_COOKIE_NAME);
 
-        userService.saveToken(jwtDecoder.decode(cookie.get().getValue()), token.getTokenValue());
+        if (cookie.isPresent()) {
+            Long id = jwtUtil.getUserIdFromOAuthToken(cookie.get().getValue());
+
+            if(id != null) {
+                userService.saveToken(id, token.getTokenValue());
+            }else {
+                clearAuthenticationAttributes(request, response);
+
+                throw new ForbidenAccessException("Invalid oauth token");
+            }
+        } else {
+            clearAuthenticationAttributes(request, response);
+
+            throw new ForbidenAccessException("Invalid oauth cookie");
+        }
 
         clearAuthenticationAttributes(request, response);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

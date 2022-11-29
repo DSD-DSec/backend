@@ -129,4 +129,9 @@ public class UserController {
         return ResponseEntity.ok(userService.getRepos(id, jwt));
     }
 
+    @GetMapping("/token")
+    public ResponseEntity<String> getOAuthtoken(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(userService.getOAuthtoken(jwt));
+    }
+
 }
