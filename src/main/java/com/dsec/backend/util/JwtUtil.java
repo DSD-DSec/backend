@@ -2,23 +2,30 @@ package com.dsec.backend.util;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet.Builder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
-import com.dsec.backend.model.UserModel;
+
 import com.dsec.backend.security.UserPrincipal;
 
 @Component
 public class JwtUtil {
 
-    private JwtEncoder jwtEncoder;
+    private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
 
     @Autowired
-    public JwtUtil(JwtEncoder jwtEncoder) {
+    public JwtUtil(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder) {
         this.jwtEncoder = jwtEncoder;
+        this.jwtDecoder = jwtDecoder;
     }
 
     public String getToken(UserPrincipal userPrincipal, Long jwtExpiry) {
@@ -28,20 +35,42 @@ public class JwtUtil {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
 
-        UserModel user = userPrincipal.getUserModel();
-
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        Builder builder = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(jwtExpiry))
                 .subject(userPrincipal.getUsername())
-                .claim("scope", scope)
-                .claim("firstName", user.getFirstName())
-                .claim("lastName", user.getLastName())
-                .claim("id", user.getId())
-                .build();
+                .claim("scope", scope);
+
+        for (var e : userPrincipal.getClaims().entrySet()) {
+            builder.claim(e.getKey(), e.getValue());
+        }
+        JwtClaimsSet claims = builder.build();
 
         return this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+    }
+
+    public String getOAuthToken(UserPrincipal userPrincipal, Long jwtExpiry) {
+        Instant now = Instant.now();
+
+        Builder builder = JwtClaimsSet.builder()
+                .issuer("self")
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(jwtExpiry))
+                .subject(userPrincipal.getUserEntity().getId().toString());
+
+        JwtClaimsSet claims = builder.build();
+
+        return this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+    }
+
+    public Long getUserIdFromOAuthToken(String token) {
+        try {
+            Jwt jwt = jwtDecoder.decode(token);
+            return Long.valueOf(jwt.getSubject());
+        } catch (JwtException e) {
+            return null;
+        }
     }
 
 }

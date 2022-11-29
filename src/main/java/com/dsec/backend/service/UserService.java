@@ -1,17 +1,41 @@
 package com.dsec.backend.service;
 
-import java.net.URI;
+import java.util.List;
+
 import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.oauth2.jwt.Jwt;
-import com.dsec.backend.DTO.LoginInfoDTO;
-import com.dsec.backend.DTO.UserDTO;
-import com.dsec.backend.DTO.UserInfoDTO;
+
+import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.model.github.RepoDTO;
+import com.dsec.backend.model.user.LoginDTO;
+import com.dsec.backend.model.user.UserRegisterDTO;
+import com.dsec.backend.model.user.UserUpdateDTO;
 
 public interface UserService {
 
-	URI register(UserDTO userDTO);
+	UserEntity register(UserRegisterDTO userRegisterDTO);
 
-	UserInfoDTO login(LoginInfoDTO loginInfoDTO, HttpServletResponse response);
+	UserEntity login(LoginDTO loginDTO, HttpServletResponse response);
 
-	UserInfoDTO getUser(Jwt user);
+	Page<UserEntity> findUsers(Pageable pageable, Specification<UserEntity> specification);
+
+	UserEntity updateUser(long id, UserUpdateDTO userUpdateDTO, Jwt jwt);
+
+	UserEntity deleteUser(long id, Jwt jwt);
+
+	UserEntity fetch(long id);
+
+	void saveToken(Long id, String token);
+
+	String getToken(Jwt jwt);
+
+	String getToken(UserEntity user);
+
+    List<RepoDTO> getRepos(long id, Jwt jwt);
+
+    String getOAuthtoken(Jwt jwt);
 }

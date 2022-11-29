@@ -3,6 +3,7 @@ package com.dsec.backend.security;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -27,13 +29,16 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
+@Slf4j
 public class SecurityConfig {
 
-	private RSAPublicKey key;
-	private RSAPrivateKey priv;
+	private final RSAPublicKey key;
+	private final RSAPrivateKey priv;
 
 	public SecurityConfig(@Value("${jwt.public.key}") RSAPublicKey key,
 			@Value("${jwt.private.key}") RSAPrivateKey priv,
@@ -43,13 +48,12 @@ public class SecurityConfig {
 		this.corsOrigins = corsOrigins;
 	}
 
-	private String corsOrigins;
+	private final String corsOrigins;
 
 	@Bean
 	public WebSecurityCustomizer webSecurityCustomizer() {
-		WebSecurityCustomizer websc = (web) -> {
+		return (web) -> {
 		};
-		return websc;
 	}
 
 	@Bean
@@ -80,7 +84,7 @@ public class SecurityConfig {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		CorsConfiguration config = new CorsConfiguration();
 		config.setAllowCredentials(true);
-		config.setAllowedOrigins(List.of(corsOrigins.split(",")));
+		config.setAllowedOriginPatterns(List.of(corsOrigins.split(",")));
 		config.addAllowedHeader("*");
 		config.addAllowedMethod("*");
 		source.registerCorsConfiguration("/**", config);
