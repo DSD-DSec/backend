@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -107,6 +108,12 @@ public class UserServiceImpl implements UserService {
 		userEntity.setLastName(userUpdateDTO.getLastName());
 
 		return userRepository.save(userEntity);
+	}
+
+	@Override
+	public List<UserEntity> allUsers()
+	{
+		return userRepository.findAll();
 	}
 
 }

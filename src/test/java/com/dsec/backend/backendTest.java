@@ -2,8 +2,12 @@ package com.dsec.backend;
 
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.model.user.UserUpdateDTO;
+import com.dsec.backend.repository.UserRepository;
+import com.dsec.backend.service.UserService;
+import com.dsec.backend.service.UserServiceImpl;
 import io.swagger.v3.core.util.Json;
 import org.assertj.core.util.Lists;
+import org.h2.engine.User;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.DisplayName;
@@ -34,8 +38,13 @@ public class backendTest {
 
     private String loginCookie = null;
 
+
+
     @Autowired
     private TestRestTemplate restTemplate;
+
+    @Autowired
+    private UserService userService;
 
     @Test
     @DisplayName("GET /api/users returns unauthorized if the user is not logged in")
@@ -72,15 +81,13 @@ public class backendTest {
         ResponseEntity<UserEntity> registerResponse =
                 this.restTemplate.exchange("http://localhost:" + port + "/api/auth/register",HttpMethod.POST, registerRequest,UserEntity.class);
 
+        System.out.println(registerResponse.getBody());
         // Checking that the register response returns the right parameter of the right user
         assertThat(registerResponse.getBody().getFirstName()).isEqualTo(firstName);
         assertThat(registerResponse.getBody().getLastName()).isEqualTo(lastName);
         assertThat(registerResponse.getBody().getEmail()).isEqualTo(email);
-        return registerResponse.getBody().getId();
-    }
 
-    public long registrationLoginOkTest()  throws Exception {
-        return this.registrationLoginOkTest("Bob", "Miller", "bob.miller@gmail.com");
+        return registerResponse.getBody().getId();
     }
 
     @Test
@@ -207,7 +214,7 @@ public class backendTest {
     public void deleteUserCheck() throws Exception {
 
         // Register user and login
-        long userID = this.registrationLoginOkTest();
+        long userID = this.registrationLoginOkTest("TestC","TestC","testc.testc@gmail.com");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -226,7 +233,7 @@ public class backendTest {
     public void getUsersUnauthorized() throws Exception {
 
         // Register user and login
-        this.registrationLoginOkTest();
+        this.registrationLoginOkTest("TestA","TestA","testa.testa@gmail.com");
 
         HttpHeaders logoutHeaders = new HttpHeaders();
         logoutHeaders.setContentType(MediaType.APPLICATION_JSON);
@@ -251,8 +258,8 @@ public class backendTest {
     @DisplayName("PUT /api/users/id register, login, put user")
     public void patchUserCheck() throws Exception {
 
-        // // Register user and login, default Bob Miller
-        long userID = this.registrationLoginOkTest();
+        // // Register user and login
+        long userID = this.registrationLoginOkTest("TestB","TestB","testb.testb@gmail.com");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -277,16 +284,13 @@ public class backendTest {
     @DisplayName("GET /api/users registers n users and check the list")
     public void getUsers() throws Exception {
 
-        // Generate 50 users data
-        List<List<String>> users = Lists.newArrayList();
-        for(int i = 0; i < 50; i++)
-            users.add(Lists.newArrayList("Bob"+(char)((i%25)+97),"Miller"+(char)((i%25)+97),"bob"+i+".miller@gmail.com"));
-
-        // Register users
-        for(int i=0; i < users.size()-1;i++)
-            this.registerUser(users.get(i).get(0),users.get(i).get(1),users.get(i).get(2));
-
-        this.registrationLoginOkTest(users.get(users.size()-1).get(0),users.get(users.size()-1).get(1),users.get(users.size()-1).get(2));
+        // Generate and register users
+        for(int i=0; i < 50;i++){
+            if(i < 49)
+                this.registerUser("Firstname"+(char)((i%25)+97),"Lastname"+(char)((i%25)+97),"firstname"+i+".lastname@gmail.com");
+            else
+                this.registrationLoginOkTest("Firstname"+(char)((i%25)+97),"Lastname"+(char)((i%25)+97),"firstname"+i+".lastname@gmail.com");
+        }
 
         // Headers of the request
         HttpHeaders getUsersHeaders = new HttpHeaders();
@@ -302,6 +306,8 @@ public class backendTest {
         JSONObject usersJson = new JSONObject(response.getBody());
         Iterator<String> keys = usersJson.keys();
 
+        List<UserEntity> users = userService.allUsers();
+
         boolean userNotPresent = false;
         while(keys.hasNext()) {
             String key = keys.next();
@@ -316,18 +322,27 @@ public class backendTest {
                         break;
                     else
                     {
-                        if(!users.contains(Lists.newArrayList(ja.getJSONObject(i).get("firstName"),ja.getJSONObject(i).get("lastName"),ja.getJSONObject(i).get("email"))))
+                        userNotPresent = true;
+                        for(int j = 0; j < users.size();j++)
                         {
-                            userNotPresent = true;
-                            break;
+                            if(users.get(j).getFirstName().equals(ja.getJSONObject(i).get("firstName")) &&
+                                    users.get(j).getLastName().equals(ja.getJSONObject(i).get("lastName")) &&
+                                    users.get(j).getEmail().equals(ja.getJSONObject(i).get("email")))
+                            {
+                                userNotPresent = false;
+                                break;
+                            }
                         }
                     }
+
+                    if(userNotPresent)
+                        break;
                 }
             }
 
         }
 
-        assertThat(false).isEqualTo(userNotPresent);
+        assertThat(userNotPresent).isEqualTo(false);
     }
 
 }

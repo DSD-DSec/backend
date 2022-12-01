@@ -10,6 +10,8 @@ import com.dsec.backend.model.user.LoginDTO;
 import com.dsec.backend.model.user.UserRegisterDTO;
 import com.dsec.backend.model.user.UserUpdateDTO;
 
+import java.util.List;
+
 public interface UserService {
 
 	UserEntity register(UserRegisterDTO userRegisterDTO);
@@ -23,5 +25,7 @@ public interface UserService {
 	UserEntity deleteUser(long id, Jwt jwt);
 
 	UserEntity fetch(long id);
+
+	List<UserEntity> allUsers();
 
 }
