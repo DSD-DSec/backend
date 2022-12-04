@@ -285,12 +285,17 @@ public class backendTest {
     public void getUsers() throws Exception {
 
         // Generate and register users
-        for(int i=0; i < 50;i++){
-            if(i < 49)
-                this.registerUser("Firstname"+(char)((i%25)+97),"Lastname"+(char)((i%25)+97),"firstname"+i+".lastname@gmail.com");
-            else
-                this.registrationLoginOkTest("Firstname"+(char)((i%25)+97),"Lastname"+(char)((i%25)+97),"firstname"+i+".lastname@gmail.com");
-        }
+        int registeredUserNumber = 50;
+        List<List<String>> users = Lists.newArrayList();
+        for(int i = 0; i < registeredUserNumber; i++)
+            users.add(Lists.newArrayList("Firstname"+(char)((i%25)+97),"Lastname"+(char)((i%25)+97),"firstname"+i+".lastname@gmail.com"));
+
+        // Register users
+        for(int i=0; i < users.size()-1;i++)
+            this.registerUser(users.get(i).get(0),users.get(i).get(1),users.get(i).get(2));
+
+        this.registrationLoginOkTest(users.get(users.size()-1).get(0),users.get(users.size()-1).get(1),users.get(users.size()-1).get(2));
+
 
         // Headers of the request
         HttpHeaders getUsersHeaders = new HttpHeaders();
@@ -300,47 +305,49 @@ public class backendTest {
 
         // GET users
         ResponseEntity<String> response =
-                this.restTemplate.exchange("http://localhost:" + port + "/api/users", HttpMethod.GET, new HttpEntity<String>("",getUsersHeaders), String.class);
+                this.restTemplate.exchange("http://localhost:" + port + "/api/users?size="+registeredUserNumber+100, HttpMethod.GET, new HttpEntity<String>("",getUsersHeaders), String.class);
 
         // Check if the users registered are in the list returned by /users
         JSONObject usersJson = new JSONObject(response.getBody());
-        Iterator<String> keys = usersJson.keys();
-
-        List<UserEntity> users = userService.allUsers();
 
         boolean userNotPresent = false;
-        while(keys.hasNext()) {
-            String key = keys.next();
 
-            if(usersJson.get(key) instanceof JSONArray)
-            {
-                JSONArray ja = usersJson.getJSONArray(key);
+        for(int i = 0; i < users.size();i++)
+        {
+            System.out.println(users.get(i));
+            Iterator<String> keys = usersJson.keys();
+            userNotPresent = true;
 
-                for(int i = 0; i < ja.length();i++)
+            while(keys.hasNext() && userNotPresent) {
+                String key = keys.next();
+
+                if(usersJson.get(key) instanceof JSONArray)
                 {
-                    if(!ja.getJSONObject(i).has("firstName"))
-                        break;
-                    else
+                    JSONArray ja = usersJson.getJSONArray(key);
+
+                    System.out.println(ja.length());
+                    for(int j = 0; j < ja.length();j++)
                     {
-                        userNotPresent = true;
-                        for(int j = 0; j < users.size();j++)
+                        System.out.println(ja.getJSONObject(j));
+                        if(!ja.getJSONObject(j).has("firstName"))
+                            break;
+                        else
                         {
-                            if(users.get(j).getFirstName().equals(ja.getJSONObject(i).get("firstName")) &&
-                                    users.get(j).getLastName().equals(ja.getJSONObject(i).get("lastName")) &&
-                                    users.get(j).getEmail().equals(ja.getJSONObject(i).get("email")))
+                            if(users.get(i).get(0).equals(ja.getJSONObject(j).get("firstName")) &&
+                                users.get(i).get(1).equals(ja.getJSONObject(j).get("lastName")) &&
+                                users.get(i).get(2).equals(ja.getJSONObject(j).get("email")))
                             {
                                 userNotPresent = false;
-                                break;
                             }
                         }
                     }
-
-                    if(userNotPresent)
-                        break;
                 }
             }
-
+            if(userNotPresent)
+                break;
         }
+
+
 
         assertThat(userNotPresent).isEqualTo(false);
     }
