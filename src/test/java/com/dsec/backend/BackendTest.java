@@ -327,8 +327,6 @@ public class BackendTest {
         ResponseEntity<String> response =
                 this.restTemplate.exchange("http://localhost:" + port + "/api/users?size=" + registeredUserNumber + 100, HttpMethod.GET, new HttpEntity<>("", getUsersHeaders), String.class);
 
-        log.info("Response: {}", response.getBody());
-
         JsonNode array = objectMapper.readTree(response.getBody()).get("content");
         ObjectReader reader = objectMapper.readerFor(new TypeReference<List<UserEntity>>() {
         });
