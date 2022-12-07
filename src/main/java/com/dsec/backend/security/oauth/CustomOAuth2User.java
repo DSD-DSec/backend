@@ -30,7 +30,13 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public String getName() {
-        return oauth2User.getAttribute("name");
+        String result = oauth2User.getAttribute("name");
+        if (result != null)
+            return result;
+        result = oauth2User.getAttribute("login");
+        if (result != null)
+            return result;
+        return getEmail();
     }
 
     public String getEmail() {
