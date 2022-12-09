@@ -1,11 +1,11 @@
 package com.dsec.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonRootName;
 import lombok.*;
-import org.hibernate.Hibernate;
+import org.springframework.hateoas.RepresentationModel;
 
 import javax.persistence.*;
-import java.util.LinkedHashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -15,14 +15,41 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Repo {
+@JsonRootName(value = "repo")
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Repo extends RepresentationModel<Repo> {
     @Id
-    // @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(nullable = false)
     private Long id;
 
+    @Column(nullable = false)
+    private Long owner;
+
+    @Column(nullable = false)
+    private String description;
+
+    @Column(nullable = false)
+    private RepoType type;
+
+    @Column(nullable = false)
+    private RepoDomain domain;
+
+    @Column(nullable = false)
+    private Boolean userData;
+
+    @Column(nullable = false)
+    private Integer security;
+
+    @Column(nullable = false)
+    private Integer availability;
+
+    // Full name of the GitHub repository, in the form username/repository_name
     @Column(nullable = false, unique = true)
     private String fullName;
+
+    @Column(nullable = false, unique = true)
+    private String name;
 
     @Column(nullable = false)
     private String url;
@@ -45,7 +72,7 @@ public class Repo {
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "repo_users", joinColumns = @JoinColumn(name = "repo_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<UserEntity> users = new LinkedHashSet<>();
+    private Set<UserEntity> users = new java.util.LinkedHashSet<>();
 
     @Override
     public boolean equals(Object o) {

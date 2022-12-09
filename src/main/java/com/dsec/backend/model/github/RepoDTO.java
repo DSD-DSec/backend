@@ -1,5 +1,7 @@
 package com.dsec.backend.model.github;
 
+import com.dsec.backend.entity.RepoDomain;
+import com.dsec.backend.entity.RepoType;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
@@ -15,6 +17,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import javax.persistence.Column;
+
 @ToString
 @Getter
 @Setter
@@ -28,6 +32,24 @@ public class RepoDTO extends RepresentationModel<RepoDTO> {
     private Long id;
     @JsonAlias("full_name")
     private String fullName;
+
+    @JsonAlias("description")
+    private String description;
+
+    @JsonAlias("type")
+    private RepoType type;
+
+    @JsonAlias("domain")
+    private RepoDomain domain;
+
+    @JsonAlias("user_data")
+    private Boolean userData;
+
+    @JsonAlias("security")
+    private Integer security;
+
+    @JsonAlias("availability")
+    private Integer availability;
     @URL
     private String url;
     @JsonAlias("html_url")
