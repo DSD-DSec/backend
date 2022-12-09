@@ -1,6 +1,11 @@
 package com.dsec.backend;
 
+import com.dsec.backend.entity.Job;
+import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.repository.JobRepository;
+import com.dsec.backend.repository.RepoRepository;
+import com.dsec.backend.repository.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,8 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Lists;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -19,9 +23,7 @@ import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.ResourceAccessException;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 // The test profile allow tests to run having db always clean
 @ActiveProfiles("test")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Slf4j
 public class BackendTest {
     @LocalServerPort
@@ -42,8 +45,16 @@ public class BackendTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private RepoRepository repoRepository;
+
+    @Autowired
+    private JobRepository jobRepository;
+
+
     @Test
     @DisplayName("GET /api/users returns unauthorized if the user is not logged in")
+    @Order(0)
     public void getUsersUnauthorizedTest() {
 
         // GET request to retrieve all the users
@@ -57,6 +68,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST /api/auth/register register user")
+    @Order(1)
     public void registerUser() throws Exception {
         String firstName = "Janko";
         String lastName = "Bananko";
@@ -96,6 +108,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST /api/auth/register -> /api/auth/login returns ok response")
+    @Order(2)
     public void registrationLoginOk() throws Exception {
         String firstName = "Janko";
         String lastName = "Bananko";
@@ -113,11 +126,16 @@ public class BackendTest {
     }
 
     private ResponseEntity<UserEntity> registrationLoginOk(String firstName, String lastName, String email) throws Exception {
+
+        registerUser(firstName, lastName, email);
+
+        return loginOk(email);
+    }
+
+    private ResponseEntity<UserEntity> loginOk( String email) throws JSONException {
         // Headers of the request
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-
-        registerUser(firstName, lastName, email);
 
         // Login parameter of the previous registered user
         JSONObject loginParameters = new JSONObject();
@@ -133,6 +151,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("GET /api/auth/login returns an exception if the user does not exist")
+    @Order(3)
     public void unauthorizedLoginTest() throws Exception {
 
         // Headers of the request
@@ -159,6 +178,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST /api/auth/register returns bad request if the password/email constraints are not respected")
+    @Order(4)
     public void wrongRegisterTest() throws Exception {
 
         // Headers of the request
@@ -187,13 +207,14 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST /api/auth/logout returns unauthorized if user is not logged in")
+    @Order(5)
     public void logoutWithoutLogin() {
 
         // Headers of the request
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // POST to logout
+        // POST to log out
         ResponseEntity<String> response =
                 this.restTemplate.exchange("http://localhost:" + port + "/api/users/logout", HttpMethod.POST, new HttpEntity<>("", headers), String.class);
 
@@ -203,6 +224,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST /api/auth/logout returns unauthorized if user is not logged in")
+    @Order(6)
     public void logoutWithoutLogin1() throws Exception {
 
         // Register user without login
@@ -210,7 +232,7 @@ public class BackendTest {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // POST to logout
+        // POST to log out
         ResponseEntity<String> response =
                 this.restTemplate.exchange("http://localhost:" + port + "/api/users/logout", HttpMethod.POST, new HttpEntity<>("", headers), String.class);
 
@@ -220,6 +242,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("DELETE /api/users/id register, login, delete user")
+    @Order(7)
     public void deleteUserCheck() throws Exception {
 
         // Register user and login
@@ -242,6 +265,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("GET /api/users register, login, logout, get users unauthorized")
+    @Order(8)
     public void getUsersUnauthorized() throws Exception {
 
         // Register user and login
@@ -254,7 +278,7 @@ public class BackendTest {
         if (loginCookie != null)
             logoutHeaders.add("Cookie", loginCookie);
 
-        // POST to logout
+        // POST to log out
         ResponseEntity<String> response = this.restTemplate.exchange("http://localhost:" + port + "/api/users/logout", HttpMethod.POST, new HttpEntity<>("", logoutHeaders), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -270,6 +294,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("PUT /api/users/id register, login, put user")
+    @Order(9)
     public void patchUserCheck() throws Exception {
 
         // // Register user and login
@@ -300,6 +325,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("GET /api/users registers n users and check the list")
+    @Order(10)
     public void getUsers() throws Exception {
 
         // Generate and register users
@@ -348,6 +374,202 @@ public class BackendTest {
             assertThat(userEntity.getFirstName()).isEqualTo(user.get(0));
             assertThat(userEntity.getLastName()).isEqualTo(user.get(1));
         }
+    }
+
+    @Test
+    @DisplayName("GET /api/repo/{repo}/jobs returns not found if repo doesn't exist")
+    @Order(11)
+    public void getRepoJobsNotFound() throws Exception {
+
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("TestD", "TestD", "testd.testd@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        long id = 12345678;
+        Repo repo = new Repo(id,"RepoTest","test","test","test","test","test","test",loginResponse.getBody());
+        repoRepository.save(repo);
+
+        // GET request to retrieve all jobs from the repo with id+1
+        ResponseEntity<String> response =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/repo/" + (id+1) + "/jobs", HttpMethod.GET, new HttpEntity<>("", header), String.class);
+
+        // Expected NOT FOUND since the repo with id+1 doesn't exist
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+    }
+
+    @Test
+    @DisplayName("GET /api/job/{id} returns not found if job doesn't exist")
+    @Order(12)
+    public void getJobsNotFound() throws Exception {
+
+        long jobID=123;
+        long repoID = 12345678;
+        jobRepository.save(new Job(jobID, "Debug string1", repoRepository.getReferenceById(repoID)));
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk( "testd.testd@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+
+        // GET the job infos
+        ResponseEntity<String> response =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/job/" + (jobID+1), HttpMethod.GET, new HttpEntity<>("", header), String.class);
+
+        // Expected NOT FOUND since the job with id+1 doesn't exist
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+    }
+
+    @Test
+    @DisplayName("GET /api/repo/{repo}/jobs returns the right jobs list")
+    @Order(13)
+    public void getRepoJobs() throws Exception {
+
+
+        // Create jobs for repo repoID
+        long repoID = 12345678;
+        List<Job> jobs = new ArrayList<>();
+
+        for(int i=0; i < 20; i++)
+        {
+            Job jobEntity = new Job("Debug string"+i, repoRepository.getReferenceById(repoID));
+            jobRepository.save(jobEntity);
+            jobs.add(jobEntity);
+        }
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk( "testd.testd@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+
+        // GET jobs of repo repoID
+        ResponseEntity<String> response =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/repo/" + (repoID) + "/jobs", HttpMethod.GET, new HttpEntity<>("", header), String.class);
+        JsonNode array = objectMapper.readTree(response.getBody());
+        ObjectReader reader = objectMapper.readerFor(new TypeReference<List<Job>>() {
+        });
+        List<Job> jobsList = reader.readValue(array);
+
+        // Check if the inserted jobs are present in the repo repoID
+        Map<Long, Job> jobListMap = jobsList.stream().collect(Collectors.toMap(Job::getId, Function.identity()));
+
+        for(Job job : jobs)
+        {
+            Job jobEntity = jobListMap.get(job.getId());
+            assertThat(jobEntity).isNotNull();
+            assertThat(job.getId()).isEqualTo(jobEntity.getId());
+            assertThat(job.getLog()).isEqualTo(jobEntity.getLog());
+        }
+    }
+
+    @Test
+    @DisplayName("GET /api/job/{id} check if the returned job is correct")
+    @Order(14)
+    public void getJob() throws Exception {
+
+        long repoID = 12345678;
+
+        // Create a job for repo repoID
+        Job jobEntity = new Job("Output string test", repoRepository.getReferenceById(repoID));
+        jobRepository.save(jobEntity);
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk( "testd.testd@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+
+        // GET request to retrieve job info
+        ResponseEntity<String> response =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/job/" + (jobEntity.getId()), HttpMethod.GET, new HttpEntity<>("", header), String.class);
+
+        JsonNode array = objectMapper.readTree(response.getBody());
+        ObjectReader reader = objectMapper.readerFor(new TypeReference<Job>() {
+        });
+        Job job = reader.readValue(array);
+
+        // Check if the inserted job infos are equal to the one obtained with the endpoint
+        assertThat(job.getId()).isEqualTo(jobEntity.getId());
+        assertThat(job.getLog()).isEqualTo(jobEntity.getLog());
+    }
+
+    @Test
+    @DisplayName("GET /api/repo/{repo}/jobs returns unauthorized if the user doesn't belong to the repo")
+    @Order(15)
+    public void getRepoJobsUnauthorized() throws Exception {
+
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk( "testa.testa@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        long id = 12345678;
+
+        // GET request to retrieve all jobs from the repo with id
+        ResponseEntity<String> response =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/repo/" + (id) + "/jobs", HttpMethod.GET, new HttpEntity<>("", header), String.class);
+
+        // Expected UNAUTHORIZED since the repo doesn't belong to the login user
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
+    }
+
+    @Test
+    @DisplayName("GET /api/job/{id} returns unauthorized if job's repo doesn't belong to the user")
+    @Order(16)
+    public void getJobsUnauthorized() throws Exception {
+
+        long jobID=1;
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk( "testa.testa@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+
+        // GET the job infos
+        ResponseEntity<String> response =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/job/" + jobID, HttpMethod.GET, new HttpEntity<>("", header), String.class);
+
+        // Expected UNAUTHORIZED since the job's repo doesn't belong to the user
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
     }
 
 }
