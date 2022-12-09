@@ -55,4 +55,18 @@ public class Repo {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "repo_users", joinColumns = @JoinColumn(name = "repo_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<UserEntity> users = new java.util.LinkedHashSet<>();
+
+    public Repo(long id, String fullName, String url, String htmlUrl, String hooksUrl, String hookUrl, String branchesUrl, String cloneUrl, UserEntity userEntity)
+    {
+        this.id = id;
+        this.fullName = fullName;
+        this.url= url;
+        this.htmlUrl = htmlUrl;
+        this.hooksUrl = hooksUrl;
+        this.hookUrl = hookUrl;
+        this.branchesUrl = branchesUrl;
+        this.cloneUrl = cloneUrl;
+        this.users = new java.util.LinkedHashSet<>();
+        this.users.add(userEntity);
+    }
 }

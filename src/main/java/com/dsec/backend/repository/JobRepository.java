@@ -5,7 +5,12 @@ import org.springframework.stereotype.Repository;
 
 import com.dsec.backend.entity.Job;
 
+import java.util.List;
+
 @Repository
 public interface JobRepository extends JpaRepository<Job, Long>  {
-    
+
+    List<Job> findAllByRepo_Id(long id);
+
+
 }

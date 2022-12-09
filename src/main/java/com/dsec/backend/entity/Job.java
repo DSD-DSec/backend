@@ -34,4 +34,11 @@ public class Job {
 
     @ManyToOne(optional = false)
     private Repo repo;
+
+    public Job(String log, Repo repo)
+    {
+        this.log = log;
+        this.repo = repo;
+    }
+
 }
