@@ -1,48 +1,32 @@
 package com.dsec.backend;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import com.dsec.backend.entity.UserEntity;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.util.Lists;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.*;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.client.ResourceAccessException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.assertj.core.util.Lists;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.client.ResourceAccessException;
-
-import com.dsec.backend.entity.Job;
-import com.dsec.backend.entity.Repo;
-import com.dsec.backend.entity.UserEntity;
-import com.dsec.backend.repository.JobRepository;
-import com.dsec.backend.repository.RepoRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 // The test profile allow tests to run having db always clean
@@ -592,6 +576,72 @@ public class BackendTest {
 
         // Expected UNAUTHORIZED since the job's repo doesn't belong to the user
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+    }
+
+    @Test
+    @DisplayName("GET /repo/{id} returns the correct information")
+    public void getRepoOkTest() throws Exception {
+
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("getRepoTest", "getRepoTest", "getRepoTest@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+        long userID = Objects.requireNonNull(loginResponse.getBody()).getId();
+
+
+        // Creation of a repo
+        Repo repo = new Repo();
+        // Repo parameter setting
+        repo.setRepoName("RepoName");
+        repo.setSecurity(5);
+        repo.setAvailability(3);
+        repo.setDomain(RepoDomain.FINANCE);
+        repo.setType(RepoType.MOBILE);
+        repo.setDescription("RepoDescription");
+        repo.setUserData(true);
+        repo.setFullName("username/repoName");
+        repo.setOwner(userID);
+        repo.setUrl("www.url.com");
+        repo.setHookUrl("www.hook.com");
+        repo.setHooksUrl("www.hooks.com");
+        repo.setBranchesUrl("www.branches.com");
+        repo.setCloneUrl("www.clone.com");
+        repo.setHtmlUrl("www.html.com");
+
+        // Repository is saved in database
+        repoRepository.save(repo);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+        // DELETE user
+        ResponseEntity<Repo> response =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/repo/1", HttpMethod.GET, new HttpEntity<>("", headers), Repo.class);
+
+        // Response status is ok since the id of the owner is equal to the id of the user who made the request
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Check for parameters correctness
+        assertThat(Objects.requireNonNull(response.getBody()).getRepoName()).isEqualTo("RepoName");
+        assertThat(Objects.requireNonNull(response.getBody()).getSecurity()).isEqualTo(5);
+        assertThat(Objects.requireNonNull(response.getBody()).getAvailability()).isEqualTo(3);
+        assertThat(Objects.requireNonNull(response.getBody()).getDomain()).isEqualTo(RepoDomain.FINANCE);
+        assertThat(Objects.requireNonNull(response.getBody()).getType()).isEqualTo(RepoType.MOBILE);
+        assertThat(Objects.requireNonNull(response.getBody()).getDescription()).isEqualTo("RepoDescription");
+        assertThat(Objects.requireNonNull(response.getBody()).getUserData()).isEqualTo(true);
+        assertThat(Objects.requireNonNull(response.getBody()).getFullName()).isEqualTo("username/repoName");
+        assertThat(Objects.requireNonNull(response.getBody()).getOwner()).isEqualTo(userID);
+        assertThat(Objects.requireNonNull(response.getBody()).getUrl()).isEqualTo("www.url.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getHookUrl()).isEqualTo("www.hook.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getHooksUrl()).isEqualTo("www.hooks.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getBranchesUrl()).isEqualTo("www.branches.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getCloneUrl()).isEqualTo("www.clone.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getHtmlUrl()).isEqualTo("www.html.com");
+
+
 
     }
 
