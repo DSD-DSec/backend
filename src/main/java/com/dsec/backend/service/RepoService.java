@@ -20,6 +20,8 @@ public interface RepoService {
 
     Repo fetch(long id);
 
+    Repo getById(long id, Jwt jwt);
+
     void triggerHook(long id, Jwt jwt);
 
 }

@@ -1,12 +1,19 @@
 package com.dsec.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonRootName;
-import lombok.*;
-import org.springframework.hateoas.RepresentationModel;
+import java.util.Set;
 
 import javax.persistence.*;
-import java.util.Set;
+
+import com.dsec.backend.model.github.RepoDTO;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonRootName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.hateoas.RepresentationModel;
 
 @Entity
 @ToString
@@ -49,7 +56,7 @@ public class Repo extends RepresentationModel<Repo> {
     private String fullName;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    private String repoName;
 
     @Column(nullable = false)
     private String url;

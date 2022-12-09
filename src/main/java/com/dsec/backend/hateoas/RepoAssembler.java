@@ -23,7 +23,7 @@ public class RepoAssembler extends RepresentationModelAssemblerSupport<Repo, Rep
     public Repo toModel(Repo repo) {
 
 
-        Link link = linkTo(methodOn(RepoController.class).getRepoById(repo.getId()))
+        Link link = linkTo(methodOn(RepoController.class).fetchRepo(repo.getId()))
                 .withSelfRel().withType(HttpMethod.GET.name());
         repo.add(link);
 

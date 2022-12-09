@@ -33,6 +33,9 @@ public class RepoDTO extends RepresentationModel<RepoDTO> {
     @JsonAlias("full_name")
     private String fullName;
 
+    @JsonAlias("repo_name")
+    private String repoName;
+
     @JsonAlias("description")
     private String description;
 
