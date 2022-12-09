@@ -1,5 +1,6 @@
 package com.dsec.backend.service;
 
+import com.dsec.backend.model.repo.RepoUpdateDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -11,7 +12,11 @@ public interface RepoService {
 
     Page<Repo> getRepos(Pageable pageable);
 
-    RepoDTO createRepo(String fullRepoName, Jwt jwt);
+    Repo createRepo(RepoDTO parameters, Jwt jwt);
+
+    Repo deleteRepo(Repo repo, Jwt jwt);
+
+    Repo updateRepo(long id, Repo repo, RepoUpdateDTO repoUpdateDTO, Jwt jwt);
 
     Repo fetch(long id);
 
