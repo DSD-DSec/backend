@@ -4,7 +4,6 @@ import java.util.Set;
 
 import javax.persistence.*;
 
-import com.dsec.backend.model.github.RepoDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import lombok.AllArgsConstructor;
@@ -56,7 +55,7 @@ public class Repo extends RepresentationModel<Repo> {
     private String fullName;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    private String repoName;
 
     @Column(nullable = false)
     private String url;

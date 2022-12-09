@@ -17,8 +17,12 @@ import javax.validation.constraints.NotEmpty;
 public class RepoUpdateDTO {
 
     @JsonAlias("full_name")
-    @NotEmpty(message = "Please enter a repository name")
+    @NotEmpty(message = "Please enter a the repository full name, in the format username/repository-name")
     private @NonNull String fullName;
+
+    @JsonAlias("repo_name")
+    @NotEmpty(message = "Please enter a repository name")
+    private @NonNull String repoName;
 
     @JsonAlias("description")
     @NotBlank(message = "Please enter a description")
