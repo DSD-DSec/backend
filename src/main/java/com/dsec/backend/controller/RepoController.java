@@ -1,11 +1,9 @@
 package com.dsec.backend.controller;
 
 import com.dsec.backend.entity.Repo;
-import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.RepoAssembler;
 import com.dsec.backend.model.repo.RepoUpdateDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -76,4 +74,5 @@ public class RepoController {
 
         return ResponseEntity.ok(repo);
     }
+
 }
