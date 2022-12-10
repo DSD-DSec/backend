@@ -95,9 +95,7 @@ public class EncryptionUtil {
         // iterationCount = 65536
         // keyLength = 256
         KeySpec spec = new PBEKeySpec(password, salt, NUM_ROUNDS, AES_KEY_SIZE);
-        SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
-        return secret;
-
+        return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
     }
 
     public String hex(byte[] bytes) {

@@ -29,12 +29,9 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
-import lombok.extern.slf4j.Slf4j;
-
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-@Slf4j
 public class SecurityConfig {
 
 	private final RSAPublicKey key;
@@ -52,7 +49,7 @@ public class SecurityConfig {
 
 	@Bean
 	public WebSecurityCustomizer webSecurityCustomizer() {
-		return (web) -> {
+		return web -> {
 		};
 	}
 

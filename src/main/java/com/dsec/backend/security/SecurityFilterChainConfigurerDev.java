@@ -107,11 +107,8 @@ public class SecurityFilterChainConfigurerDev {
         return (request) -> {
             Optional<Cookie> cookie = cookieUtil.getCookie(request, cookieName);
 
-            if (cookie.isPresent()) {
-                return cookie.get().getValue();
-            }
+            return cookie.map(Cookie::getValue).orElse(null);
 
-            return null;
         };
     }
 

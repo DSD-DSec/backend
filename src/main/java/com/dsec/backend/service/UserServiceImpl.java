@@ -166,7 +166,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public String getOAuthtoken(Jwt jwt) {
-		return jwtUtil.getOAuthToken(UserPrincipal.fromClaims(jwt.getClaims()), Long.valueOf(180));
+		return jwtUtil.getOAuthToken(UserPrincipal.fromClaims(jwt.getClaims()), 180L);
 	}
 
 }
