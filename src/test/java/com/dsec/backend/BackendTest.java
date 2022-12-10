@@ -4,6 +4,7 @@ import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.RepoDomain;
 import com.dsec.backend.entity.RepoType;
 import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.repository.RepoRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 // The test profile allow tests to run having db always clean
@@ -364,8 +366,14 @@ public class BackendTest {
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("getRepoTest", "getRepoTest", "getRepoTest@gmail.com");
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
         String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
         long userID = Objects.requireNonNull(loginResponse.getBody()).getId();
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
 
 
         // Creation of a repo
@@ -390,14 +398,11 @@ public class BackendTest {
         // Repository is saved in database
         repoRepository.save(repo);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        if (loginCookie != null)
-            headers.add("Cookie", loginCookie);
+        Long repo_id = retrieveRepoID("username/repoName");
 
-        // DELETE user
+        // GET repository
         ResponseEntity<Repo> response =
-                this.restTemplate.exchange("http://localhost:" + port + "/api/repo/1", HttpMethod.GET, new HttpEntity<>("", headers), Repo.class);
+                this.restTemplate.exchange("http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.GET, new HttpEntity<>("", headers), Repo.class);
 
         // Response status is ok since the id of the owner is equal to the id of the user who made the request
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -420,7 +425,100 @@ public class BackendTest {
         assertThat(Objects.requireNonNull(response.getBody()).getHtmlUrl()).isEqualTo("www.html.com");
 
 
+    }
 
+    @Test
+    @DisplayName("POST repo/{id} -> POST repo/{id} -> GET repo/{id} : returns correct information")
+    public void updateRepoOkTest() throws Exception {
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("updateRepoOkTest",
+                "updateRepoOkTest", "updateRepoOkTest@gmail.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+        long userID = Objects.requireNonNull(loginResponse.getBody()).getId();
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+
+        // Creation of a repo
+        Repo repo = new Repo();
+        // Repo parameter setting
+        repo.setRepoName("Repository Name");
+        repo.setSecurity(5);
+        repo.setAvailability(3);
+        repo.setDomain(RepoDomain.FINANCE);
+        repo.setType(RepoType.MOBILE);
+        repo.setDescription("RepoDescription");
+        repo.setUserData(true);
+        repo.setFullName("username/repo_name");
+        repo.setOwner(userID);
+        repo.setUrl("www.url.com");
+        repo.setHookUrl("www.hook.com");
+        repo.setHooksUrl("www.hooks.com");
+        repo.setBranchesUrl("www.branches.com");
+        repo.setCloneUrl("www.clone.com");
+        repo.setHtmlUrl("www.html.com");
+
+        // Repository is saved in database
+        repoRepository.save(repo);
+
+        // Repo update parameters
+        JSONObject repoUpdateParameters = new JSONObject();
+        repoUpdateParameters.put("full_name", "username/repo_name");
+        repoUpdateParameters.put("repo_name", "NewName");
+        repoUpdateParameters.put("description", "New description");
+        repoUpdateParameters.put("type", "WEBSITE");
+        repoUpdateParameters.put("domain", "SPORT");
+        repoUpdateParameters.put("user_data", false);
+        repoUpdateParameters.put("security", 2);
+        repoUpdateParameters.put("availability", 2);
+
+        HttpEntity<String> updateRepoRequest =
+                new HttpEntity<>(repoUpdateParameters.toString(), headers);
+
+        Long repo_id = retrieveRepoID("username/repo_name");
+
+        // PUT to update repository information
+        ResponseEntity<Repo> updateResponse =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.PUT, updateRepoRequest, Repo.class);
+
+        // Expected OK since updated is done successfully by the repo owner
+        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Check for parameters correctness
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getRepoName()).isEqualTo("NewName");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getSecurity()).isEqualTo(2);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getAvailability()).isEqualTo(2);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getDomain()).isEqualTo(RepoDomain.SPORT);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getType()).isEqualTo(RepoType.WEBSITE);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getDescription()).isEqualTo("New description");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getUserData()).isEqualTo(false);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getFullName()).isEqualTo("username/repo_name");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getOwner()).isEqualTo(userID);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getUrl()).isEqualTo("www.url.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getHookUrl()).isEqualTo("www.hook.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getHooksUrl()).isEqualTo("www.hooks.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getBranchesUrl()).isEqualTo("www.branches.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getCloneUrl()).isEqualTo("www.clone.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getHtmlUrl()).isEqualTo("www.html.com");
+
+
+    }
+
+    private Long retrieveRepoID(String fullName) {
+        int index = -1;
+        List<Repo> repos = repoRepository.findAll();
+        for (int i=0; i<repos.size(); i++) {
+            if (repos.get(i).getFullName().equals(fullName))
+                index = i;
+        }
+        if(index >= 0)
+            return repos.get(index).getId();
+        else throw new EntityMissingException(Repo.class, id);
     }
 
 }

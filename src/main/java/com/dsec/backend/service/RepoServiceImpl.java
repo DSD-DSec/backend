@@ -124,7 +124,7 @@ public class RepoServiceImpl implements RepoService {
     public Repo fetch(long id) {
 
         return repoRepository.findById(id)
-                .orElseThrow(() -> new EntityMissingException(UserEntity.class, id));
+                .orElseThrow(() -> new EntityMissingException(Repo.class, id));
     }
 
     @Override
