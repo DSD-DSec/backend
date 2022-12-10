@@ -890,4 +890,33 @@ public class BackendTest {
 
     }
 
+    @Test
+    @DisplayName("POST repo/{id} -> DELETE repo/{id} -> Valid deletion")
+    public void deleteRepoNotExist() throws Exception {
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("deleteRepoNotExist",
+                "deleteRepoNotExist", "deleteRepoNotExist@gmail.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+        long repo_id = -1L;
+
+        // DELETE repository
+        ResponseEntity<String> response =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.DELETE, new HttpEntity<>("", headers), String.class);
+
+        // Expected NOT FOUND since repository does not exist
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+
+    }
+
+
+
 }
