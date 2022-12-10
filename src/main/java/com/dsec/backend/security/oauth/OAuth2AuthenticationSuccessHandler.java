@@ -1,14 +1,11 @@
 package com.dsec.backend.security.oauth;
 
-import java.io.IOException;
-import java.util.Optional;
-
-import javax.naming.AuthenticationException;
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.service.UserService;
+import com.dsec.backend.util.JwtUtil;
+import com.dsec.backend.util.cookie.CookieUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
@@ -19,13 +16,11 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.dsec.backend.exception.ForbidenAccessException;
-import com.dsec.backend.service.UserService;
-import com.dsec.backend.util.JwtUtil;
-import com.dsec.backend.util.cookie.CookieUtil;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -40,7 +35,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-            Authentication authentication) throws IOException, ServletException {
+            Authentication authentication) throws IOException {
 
         if (response.isCommitted()) {
             log.debug("Response has already been committed. Unable to redirect.");

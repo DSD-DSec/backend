@@ -3,7 +3,6 @@ package com.dsec.backend.handler;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.dsec.backend.exception.UnauthorizedAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -54,15 +53,6 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(AuthenticationException.class)
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)
 	public ResponseEntity<ErrorDTO> handleAuthenticationException(AuthenticationException e) {
-		e.printStackTrace();
-
-		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED),
-				HttpStatus.UNAUTHORIZED);
-	}
-
-	@ExceptionHandler(UnauthorizedAccessException.class)
-	@ResponseStatus(HttpStatus.UNAUTHORIZED)
-	public ResponseEntity<ErrorDTO> handleUnauthorizedAccessException(UnauthorizedAccessException e) {
 		e.printStackTrace();
 
 		return new ResponseEntity<>(createProps(e, HttpStatus.UNAUTHORIZED),

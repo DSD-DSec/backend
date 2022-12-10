@@ -72,7 +72,7 @@ public class GithubClientServiceImpl implements GithubClientService {
     @Override
     public Mono<Repo> getRepo(String fullRepoName, Jwt jwt) {
         return get("/repos/" + fullRepoName, userService.getToken(jwt)).bodyToMono(RepoDTO.class)
-                .map(dto -> validate(dto)).map(dto -> {
+                .map(this::validate).map(dto -> {
                     Repo repo = new Repo();
                     BeanUtils.copyProperties(dto, repo);
                     return repo;
@@ -91,7 +91,7 @@ public class GithubClientServiceImpl implements GithubClientService {
         return webClient.post().uri("/repos/" + fullRepoName + "/hooks")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .body(Mono.just(createWebhook), CreateWebhook.class)
-                .retrieve().bodyToMono(UrlDTO.class).map(dto -> validate(dto)).map(dto -> dto.getUrl());
+                .retrieve().bodyToMono(UrlDTO.class).map(this::validate).map(UrlDTO::getUrl);
     }
 
     @Override

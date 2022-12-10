@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface JobRepository extends JpaRepository<Job, Long>  {
 
-    List<Job> findAllByRepo_Id(long id);
+    List<Job> findAllByRepoId(long id);
 
 
 }
