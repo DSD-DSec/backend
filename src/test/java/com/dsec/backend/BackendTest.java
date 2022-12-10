@@ -892,7 +892,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST repo/{id} -> DELETE repo/{id} -> Valid deletion")
-    public void deleteRepoNotExist() throws Exception {
+    public void deleteRepoNotFound() throws Exception {
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("deleteRepoNotExist",
                 "deleteRepoNotExist", "deleteRepoNotExist@gmail.com");
@@ -913,6 +913,50 @@ public class BackendTest {
 
         // Expected NOT FOUND since repository does not exist
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+
+    }
+
+    @Test
+    @DisplayName("POST repo/{id} -> DELETE repo/{id} -> Valid deletion")
+    public void updateRepoNotFound() throws Exception {
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("deleteRepoNotExist",
+                "deleteRepoNotExist", "deleteRepoNotExist@gmail.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+        // Repo update parameters
+        JSONObject repoUpdateParameters = new JSONObject();
+        repoUpdateParameters.put("full_name", "username/repo_name");
+        // Empty repo name, not allowed
+        repoUpdateParameters.put("repo_name", "");
+        repoUpdateParameters.put("description", "New description");
+        // Not a valid option
+        repoUpdateParameters.put("type", "FOOTBALL");
+        // Not a valid option
+        repoUpdateParameters.put("domain", "SPAIN");
+        repoUpdateParameters.put("user_data", false);
+        repoUpdateParameters.put("security", 2);
+        repoUpdateParameters.put("availability", 2);
+
+        HttpEntity<String> updateRepoRequest =
+                new HttpEntity<>(repoUpdateParameters.toString(), headers);
+
+        long repo_id = -1L;
+
+        // UPDATE repository
+        ResponseEntity<String> response =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.PUT, updateRepoRequest, String.class);
+
+        // Expected BAD REQUEST since repository does not exist
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
 
     }
