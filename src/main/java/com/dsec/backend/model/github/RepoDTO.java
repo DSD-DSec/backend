@@ -1,11 +1,12 @@
 package com.dsec.backend.model.github;
 
-import com.dsec.backend.entity.RepoDomain;
-import com.dsec.backend.entity.RepoType;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
+import org.springframework.lang.Nullable;
 
+import com.dsec.backend.entity.RepoDomain;
+import com.dsec.backend.entity.RepoType;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRootName;
@@ -17,7 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import javax.persistence.Column;
+import java.util.Objects;
 
 @ToString
 @Getter
@@ -70,4 +71,18 @@ public class RepoDTO extends RepresentationModel<RepoDTO> {
     @JsonAlias("clone_url")
     @URL
     private String cloneUrl;
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        RepoDTO repoDTO = (RepoDTO) o;
+        return id.equals(repoDTO.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), id);
+    }
 }

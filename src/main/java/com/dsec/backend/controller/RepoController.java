@@ -1,23 +1,32 @@
 package com.dsec.backend.controller;
 
-import com.dsec.backend.entity.Repo;
-import com.dsec.backend.entity.UserEntity;
-import com.dsec.backend.hateoas.RepoAssembler;
-import com.dsec.backend.model.repo.RepoUpdateDTO;
+import java.util.List;
+
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.dsec.backend.entity.Job;
+import com.dsec.backend.entity.Repo;
+import com.dsec.backend.hateoas.RepoAssembler;
 import com.dsec.backend.model.EmptyDTO;
 import com.dsec.backend.model.github.RepoDTO;
+import com.dsec.backend.model.repo.RepoUpdateDTO;
+import com.dsec.backend.service.JobService;
 import com.dsec.backend.service.RepoService;
 
 import lombok.RequiredArgsConstructor;
-
-import javax.validation.Valid;
 
 @RestController
 @RequestMapping(value = "/repo")
@@ -28,16 +37,6 @@ public class RepoController {
     private final JobService jobService;
 
     private final RepoAssembler repoAssembler;
-
-    /*
-    @PostMapping("/{owner}/{repo}")
-    public ResponseEntity<RepoDTO> createRepo(@PathVariable("owner") String owner,
-            @PathVariable("repo") String repoName,
-            @AuthenticationPrincipal Jwt jwt) {
-
-        return ResponseEntity.ok(repoService.createRepo(owner + "/" + repoName, jwt));
-    }
-    */
 
     @PostMapping("/trigger/{id}")
     public ResponseEntity<EmptyDTO> triggerHook(@PathVariable("id") long id,

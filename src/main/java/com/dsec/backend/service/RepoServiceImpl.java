@@ -1,7 +1,5 @@
 package com.dsec.backend.service;
 
-import com.dsec.backend.exception.ForbidenAccessException;
-import com.dsec.backend.model.repo.RepoUpdateDTO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,16 +11,14 @@ import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.exception.EntityAlreadyExistsException;
 import com.dsec.backend.exception.EntityMissingException;
+import com.dsec.backend.exception.ForbidenAccessException;
 import com.dsec.backend.model.github.RepoDTO;
+import com.dsec.backend.model.repo.RepoUpdateDTO;
 import com.dsec.backend.repository.RepoRepository;
 import com.dsec.backend.security.UserPrincipal;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-import java.util.Optional;
-
-@Slf4j
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class RepoServiceImpl implements RepoService {
@@ -38,7 +34,7 @@ public class RepoServiceImpl implements RepoService {
 
     @Override
     public Repo createRepo(RepoDTO parameters, Jwt jwt) {
-        //Repository already existing
+        // Repository already existing
         if (repoRepository.existsByFullName(parameters.getFullName())) {
             throw new EntityAlreadyExistsException();
         }
@@ -46,12 +42,13 @@ public class RepoServiceImpl implements RepoService {
         // New repo is created using GitHub client service
         Repo repo = githubClientService.getRepo(parameters.getFullName(), jwt).block();
         // User is fetched from the jwt token, it is also the owner of the repo
-        UserEntity user = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
+        UserEntity jwtUser = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
+        UserEntity user = userService.fetch(jwtUser.getId());
 
         // Setting repository parameters from DTO
         assert repo != null;
         repo.setRepoName(parameters.getRepoName());
-        repo.setOwner(user.getId());
+        repo.setOwner(user);
         repo.setDescription(parameters.getDescription());
         repo.setType(parameters.getType());
         repo.setDomain(parameters.getDomain());
@@ -73,7 +70,7 @@ public class RepoServiceImpl implements RepoService {
     public Repo deleteRepo(Repo repo, Jwt jwt) {
         UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
-        if (!userJwt.getId().equals(repo.getOwner()))
+        if (!userJwt.getId().equals(repo.getOwner().getId()))
             throw new ForbidenAccessException("Invalid repo deletion.");
 
         repoRepository.deleteById(repo.getId());
@@ -85,7 +82,7 @@ public class RepoServiceImpl implements RepoService {
     public Repo updateRepo(long id, Repo repo, RepoUpdateDTO repoUpdateDTO, Jwt jwt) {
         UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
-        if (!userJwt.getId().equals(repo.getOwner()))
+        if (!userJwt.getId().equals(repo.getOwner().getId()))
             throw new ForbidenAccessException("Invalid repo update.");
 
         repo.setFullName(repoUpdateDTO.getFullName());
@@ -97,7 +94,6 @@ public class RepoServiceImpl implements RepoService {
         repo.setSecurity(repoUpdateDTO.getSecurity());
         repo.setAvailability(repoUpdateDTO.getAvailability());
 
-
         return repoRepository.save(repo);
     }
 
@@ -105,15 +101,15 @@ public class RepoServiceImpl implements RepoService {
     public Repo getById(long id, Jwt jwt) {
 
         // For now, only the owner of the repository is able to retrieve it
-        // TODO: all the team members must be able to retrieve the repository project (if teams will be implemented)
+        // TODO: all the team members must be able to retrieve the repository project
+        // (if teams will be implemented)
 
         UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
-        Optional<Repo> repo = repoRepository.findById(id);
+        Repo repo = fetch(id);
 
-        if(repo.isPresent()) {
-            if (!userJwt.getId().equals(repo.get().getOwner()))
-                throw new ForbidenAccessException("You have not the permission to access to this Repository.");
+        if (!userJwt.getId().equals(repo.getOwner().getId())) {
+            throw new ForbidenAccessException("You have not the permission to access to this Repository.");
         }
 
         return repoRepository.findById(id)

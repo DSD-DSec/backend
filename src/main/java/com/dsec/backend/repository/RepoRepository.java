@@ -9,5 +9,7 @@ import com.dsec.backend.entity.Repo;
 public interface RepoRepository extends JpaRepository<Repo, Long> {
 
     boolean existsByFullName(String fullName);
-    
+
+    Repo findByFullName(String fullName);
+
 }

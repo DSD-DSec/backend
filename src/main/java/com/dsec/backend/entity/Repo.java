@@ -1,19 +1,32 @@
 package com.dsec.backend.entity;
 
+import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 
-import com.dsec.backend.model.github.RepoDTO;
+import org.hibernate.Hibernate;
+import org.springframework.hateoas.RepresentationModel;
+import org.springframework.lang.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRootName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.hateoas.RepresentationModel;
 
 @Entity
 @ToString
@@ -30,8 +43,8 @@ public class Repo extends RepresentationModel<Repo> {
     @Column(nullable = false)
     private Long id;
 
-    @Column(nullable = false)
-    private Long owner;
+    @ManyToOne(optional = false)
+    private UserEntity owner;
 
     @Column(nullable = false)
     private String description;
@@ -82,7 +95,7 @@ public class Repo extends RepresentationModel<Repo> {
     private Set<UserEntity> users = new java.util.LinkedHashSet<>();
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         Repo repo = (Repo) o;
