@@ -34,9 +34,12 @@ import org.springframework.web.client.ResourceAccessException;
 
 import com.dsec.backend.entity.Job;
 import com.dsec.backend.entity.Repo;
+import com.dsec.backend.entity.RepoDomain;
+import com.dsec.backend.entity.RepoType;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.repository.JobRepository;
 import com.dsec.backend.repository.RepoRepository;
+import com.dsec.backend.service.UserService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +47,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 
 import lombok.extern.slf4j.Slf4j;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 // The test profile allow tests to run having db always clean
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -65,10 +68,13 @@ public class BackendTest {
     @Autowired
     private JobRepository jobRepository;
 
+    @Autowired
+    private UserService userService;
+
     @Test
     @DisplayName("GET /api/users returns unauthorized if the user is not logged in")
     @Order(0)
-    public void getUsersUnauthorizedTest() {
+    void getUsersUnauthorizedTest() {
 
         // GET request to retrieve all the users
         ResponseEntity<String> response = this.restTemplate.getForEntity("http://localhost:" + port + "/api/users",
@@ -82,7 +88,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/register register user")
     @Order(1)
-    public void registerUser() throws Exception {
+    void registerUser() throws Exception {
         String firstName = "Janko";
         String lastName = "Bananko";
         String email = "janko.bananko@gmail.com";
@@ -122,7 +128,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/register -> /api/auth/login returns ok response")
     @Order(2)
-    public void registrationLoginOk() throws Exception {
+    void registrationLoginOk() throws Exception {
         String firstName = "Janko";
         String lastName = "Bananko";
         String email = "janko.bananko1@gmail.com";
@@ -168,7 +174,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/auth/login returns an exception if the user does not exist")
     @Order(3)
-    public void unauthorizedLoginTest() throws Exception {
+    void unauthorizedLoginTest() throws Exception {
 
         // Headers of the request
         HttpHeaders headers = new HttpHeaders();
@@ -194,7 +200,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/register returns bad request if the password/email constraints are not respected")
     @Order(4)
-    public void wrongRegisterTest() throws Exception {
+    void wrongRegisterTest() throws Exception {
 
         // Headers of the request
         HttpHeaders headers = new HttpHeaders();
@@ -222,7 +228,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/logout returns unauthorized if user is not logged in")
     @Order(5)
-    public void logoutWithoutLogin() {
+    void logoutWithoutLogin() {
 
         // Headers of the request
         HttpHeaders headers = new HttpHeaders();
@@ -239,7 +245,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/logout returns unauthorized if user is not logged in")
     @Order(6)
-    public void logoutWithoutLogin1() throws Exception {
+    void logoutWithoutLogin1() throws Exception {
 
         // Register user without login
         this.registerUser("Bob", "Miller", "bob.miller@gmail.com");
@@ -257,7 +263,7 @@ public class BackendTest {
     @Test
     @DisplayName("DELETE /api/users/id register, login, delete user")
     @Order(7)
-    public void deleteUserCheck() throws Exception {
+    void deleteUserCheck() throws Exception {
 
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("TestC", "TestC", "testc.testc@gmail.com");
@@ -281,7 +287,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/users register, login, logout, get users unauthorized")
     @Order(8)
-    public void getUsersUnauthorized() throws Exception {
+    void getUsersUnauthorized() throws Exception {
 
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("TestA", "TestA", "testa.testa@gmail.com");
@@ -311,7 +317,7 @@ public class BackendTest {
     @Test
     @DisplayName("PUT /api/users/id register, login, put user")
     @Order(9)
-    public void patchUserCheck() throws Exception {
+    void patchUserCheck() throws Exception {
 
         // // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("TestB", "TestB", "testb.testb@gmail.com");
@@ -343,7 +349,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/users registers n users and check the list")
     @Order(10)
-    public void getUsers() throws Exception {
+    void getUsers() throws Exception {
 
         // Generate and register users
         int registeredUserNumber = 50;
@@ -400,7 +406,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/repo/{repo}/jobs returns not found if repo doesn't exist")
     @Order(11)
-    public void getRepoJobsNotFound() throws Exception {
+    void getRepoJobsNotFound() throws Exception {
 
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -412,24 +418,17 @@ public class BackendTest {
         if (loginCookie != null)
             header.add("Cookie", loginCookie);
 
-        long id = 12345678;
-        Repo repo = Repo.builder()
-                .id(id)
-                .fullName("RepoTest")
-                .url("test")
-                .branchesUrl("test")
-                .cloneUrl("test")
-                .hooksUrl("test")
-                .hookUrl("test")
-                .htmlUrl("test")
-                .build();
+        UserEntity user = userService.fetch(loginResponse.getBody().getId());
 
-        repo.getUsers().add(loginResponse.getBody());
-        repoRepository.save(repo);
+        Repo repo = mockRepo("RepoTest", user);
+
+        repo.getUsers().add(user);
+        repo.setGithubId(1L);
+        repo = repoRepository.save(repo);
 
         // GET request to retrieve all jobs from the repo with id+1
         ResponseEntity<String> response = this.restTemplate.exchange(
-                "http://localhost:" + port + "/api/repo/" + (id + 1) + "/jobs", HttpMethod.GET,
+                "http://localhost:" + port + "/api/repo/" + repo.getId() + 1 + "/jobs", HttpMethod.GET,
                 new HttpEntity<>("", header), String.class);
 
         // Expected NOT FOUND since the repo with id+1 doesn't exist
@@ -440,11 +439,11 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/job/{id} returns not found if job doesn't exist")
     @Order(12)
-    public void getJobsNotFound() throws Exception {
+    void getJobsNotFound() throws Exception {
 
         long jobID = 123;
-        long repoID = 12345678;
-        jobRepository.save(new Job(jobID, "Debug string1", repoRepository.getReferenceById(repoID)));
+        String repoFullName = "RepoTest";
+        jobRepository.save(new Job(jobID, "Debug string1", repoRepository.findByFullName(repoFullName)));
 
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -469,14 +468,16 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/repo/{repo}/jobs returns the right jobs list")
     @Order(13)
-    public void getRepoJobs() throws Exception {
+    void getRepoJobs() throws Exception {
 
-        // Create jobs for repo repoID
-        long repoID = 12345678;
+        // Create jobs for repo with fullName
+        String repoFullName = "RepoTest";
+        Repo repo = repoRepository.findByFullName(repoFullName);
+
         List<Job> jobs = new ArrayList<>();
 
         for (int i = 0; i < 20; i++) {
-            Job jobEntity = new Job("Debug string" + i, repoRepository.getReferenceById(repoID));
+            Job jobEntity = new Job("Debug string" + i, repo);
             jobRepository.save(jobEntity);
             jobs.add(jobEntity);
         }
@@ -491,13 +492,13 @@ public class BackendTest {
         if (loginCookie != null)
             header.add("Cookie", loginCookie);
 
-        // GET jobs of repo repoID
+        // GET jobs of repo
         ResponseEntity<List<Job>> response = this.restTemplate.exchange(
-                "http://localhost:" + port + "/api/repo/" + (repoID) + "/jobs", HttpMethod.GET,
+                "http://localhost:" + port + "/api/repo/" + (repo.getId()) + "/jobs", HttpMethod.GET,
                 new HttpEntity<>("", header), new ParameterizedTypeReference<List<Job>>() {
                 });
 
-        // Check if the inserted jobs are present in the repo repoID
+        // Check if the inserted jobs are present in the repo
         Map<Long, Job> jobListMap = response.getBody().stream()
                 .collect(Collectors.toMap(Job::getId, Function.identity()));
 
@@ -512,12 +513,13 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/job/{id} check if the returned job is correct")
     @Order(14)
-    public void getJob() throws Exception {
+    void getJob() throws Exception {
 
-        long repoID = 12345678;
+        // Create a job for repo
+        String repoFullName = "RepoTest";
+        Repo repo = repoRepository.findByFullName(repoFullName);
 
-        // Create a job for repo repoID
-        Job jobEntity = new Job("Output string test", repoRepository.getReferenceById(repoID));
+        Job jobEntity = new Job("Output string test", repo);
         jobRepository.save(jobEntity);
 
         HttpHeaders header = new HttpHeaders();
@@ -545,7 +547,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/repo/{repo}/jobs returns forbidden if the user doesn't belong to the repo")
     @Order(15)
-    public void getRepoJobsForbidden() throws Exception {
+    void getRepoJobsForbidden() throws Exception {
 
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -557,11 +559,12 @@ public class BackendTest {
         if (loginCookie != null)
             header.add("Cookie", loginCookie);
 
-        long id = 12345678;
+        String repoFullName = "RepoTest";
+        Repo repo = repoRepository.findByFullName(repoFullName);
 
         // GET request to retrieve all jobs from the repo with id
         ResponseEntity<String> response = this.restTemplate.exchange(
-                "http://localhost:" + port + "/api/repo/" + (id) + "/jobs", HttpMethod.GET,
+                "http://localhost:" + port + "/api/repo/" + (repo.getId()) + "/jobs", HttpMethod.GET,
                 new HttpEntity<>("", header), String.class);
 
         // Expected UNAUTHORIZED since the repo doesn't belong to the login user
@@ -572,7 +575,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/job/{id} returns forbidden if job's repo doesn't belong to the user")
     @Order(16)
-    public void getJobsForbidden() throws Exception {
+    void getJobsForbidden() throws Exception {
 
         long jobID = 1;
 
@@ -593,6 +596,399 @@ public class BackendTest {
         // Expected UNAUTHORIZED since the job's repo doesn't belong to the user
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
+    }
+
+    @Test
+    @DisplayName("GET /repo/{id} returns the correct information")
+    void getRepoOkTest() throws Exception {
+
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("getRepoTest", "getRepoTest",
+                "getRepoTest@gmail.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+        long userID = Objects.requireNonNull(loginResponse.getBody()).getId();
+
+        UserEntity user = userService.fetch(userID);
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+        // Creation of a repo
+        Repo repo = mockRepo("", user);
+        // Repo parameter setting
+        repo.setRepoName("RepoName");
+        repo.setSecurity(5);
+        repo.setAvailability(3);
+        repo.setDomain(RepoDomain.FINANCE);
+        repo.setType(RepoType.MOBILE);
+        repo.setDescription("RepoDescription");
+        repo.setUserData(true);
+        repo.setFullName("username/repoName");
+        repo.setOwner(user);
+        repo.setUrl("www.url.com");
+        repo.setHookUrl("www.hook.com");
+        repo.setHooksUrl("www.hooks.com");
+        repo.setBranchesUrl("www.branches.com");
+        repo.setCloneUrl("www.clone.com");
+        repo.setHtmlUrl("www.html.com");
+        repo.setGithubId(2L);
+
+        // Repository is saved in database
+        repo = repoRepository.save(repo);
+
+        // GET repository
+        ResponseEntity<Repo> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo.getId(),
+                HttpMethod.GET, new HttpEntity<>("", headers), Repo.class);
+
+        // Response status is ok since the id of the owner is equal to the id of the
+        // user who made the request
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Check for parameters correctness
+        assertThat(Objects.requireNonNull(response.getBody()).getRepoName()).isEqualTo("RepoName");
+        assertThat(Objects.requireNonNull(response.getBody()).getSecurity()).isEqualTo(5);
+        assertThat(Objects.requireNonNull(response.getBody()).getAvailability()).isEqualTo(3);
+        assertThat(Objects.requireNonNull(response.getBody()).getDomain()).isEqualTo(RepoDomain.FINANCE);
+        assertThat(Objects.requireNonNull(response.getBody()).getType()).isEqualTo(RepoType.MOBILE);
+        assertThat(Objects.requireNonNull(response.getBody()).getDescription()).isEqualTo("RepoDescription");
+        assertThat(Objects.requireNonNull(response.getBody()).getUserData()).isTrue();
+        assertThat(Objects.requireNonNull(response.getBody()).getFullName()).isEqualTo("username/repoName");
+        assertThat(Objects.requireNonNull(response.getBody()).getOwner().getId()).isEqualTo(userID);
+        assertThat(Objects.requireNonNull(response.getBody()).getUrl()).isEqualTo("www.url.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getHookUrl()).isEqualTo("www.hook.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getHooksUrl()).isEqualTo("www.hooks.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getBranchesUrl()).isEqualTo("www.branches.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getCloneUrl()).isEqualTo("www.clone.com");
+        assertThat(Objects.requireNonNull(response.getBody()).getHtmlUrl()).isEqualTo("www.html.com");
+
+    }
+
+    @Test
+    @DisplayName("POST repo/{id} -> POST repo/{id} -> GET repo/{id} : returns correct information")
+    void updateRepoOkTest() throws Exception {
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("updateRepoOkTest",
+                "updateRepoOkTest", "updateRepoOkTest@gmail.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+        long userID = Objects.requireNonNull(loginResponse.getBody()).getId();
+
+        UserEntity user = userService.fetch(userID);
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+        // Creation of a repo
+        Repo repo = mockRepo("", user);
+        // Repo parameter setting
+        repo.setRepoName("Repository Name4");
+        repo.setSecurity(5);
+        repo.setAvailability(3);
+        repo.setDomain(RepoDomain.FINANCE);
+        repo.setType(RepoType.MOBILE);
+        repo.setDescription("RepoDescription");
+        repo.setUserData(true);
+        repo.setFullName("username/repo_name3");
+        repo.setOwner(user);
+        repo.setUrl("www.url.com");
+        repo.setHookUrl("www.hook.com");
+        repo.setHooksUrl("www.hooks.com");
+        repo.setBranchesUrl("www.branches.com");
+        repo.setCloneUrl("www.clone.com");
+        repo.setHtmlUrl("www.html.com");
+        repo.setGithubId(3L);
+
+        // Repository is saved in database
+        repoRepository.save(repo);
+
+        // Repo update parameters
+        JSONObject repoUpdateParameters = new JSONObject();
+        repoUpdateParameters.put("repoName", "NewName2");
+        repoUpdateParameters.put("description", "New description");
+        repoUpdateParameters.put("type", "WEBSITE");
+        repoUpdateParameters.put("domain", "SPORT");
+        repoUpdateParameters.put("userData", false);
+        repoUpdateParameters.put("security", 2);
+        repoUpdateParameters.put("availability", 2);
+
+        HttpEntity<String> updateRepoRequest = new HttpEntity<>(repoUpdateParameters.toString(), headers);
+
+        Long repo_id = repoRepository.findByFullName("username/repo_name3").getId();
+
+        // PUT to update repository information
+        ResponseEntity<Repo> updateResponse = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.PUT, updateRepoRequest, Repo.class);
+
+        // Expected OK since updated is done successfully by the repo owner
+        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Check for parameters correctness
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getRepoName()).isEqualTo("NewName2");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getSecurity()).isEqualTo(2);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getAvailability()).isEqualTo(2);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getDomain()).isEqualTo(RepoDomain.SPORT);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getType()).isEqualTo(RepoType.WEBSITE);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getDescription()).isEqualTo("New description");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getUserData()).isFalse();
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getOwner().getId()).isEqualTo(userID);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getUrl()).isEqualTo("www.url.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getHookUrl()).isEqualTo("www.hook.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getHooksUrl()).isEqualTo("www.hooks.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getBranchesUrl()).isEqualTo("www.branches.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getCloneUrl()).isEqualTo("www.clone.com");
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getHtmlUrl()).isEqualTo("www.html.com");
+
+    }
+
+    @Test
+    @DisplayName("POST repo/{id} -> POST repo/{id} -> GET repo/{id} : returns correct information")
+    void updateRepoBadTest() throws Exception {
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("updateRepoBadTest",
+                "updateRepoBadTest", "updateRepoBadTest@gmail.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+        long userID = Objects.requireNonNull(loginResponse.getBody()).getId();
+
+        UserEntity user = userService.fetch(userID);
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+        // Creation of a repo
+        Repo repo = mockRepo("", user);
+        // Repo parameter setting
+        repo.setRepoName("Repository Name");
+        repo.setSecurity(5);
+        repo.setAvailability(3);
+        repo.setDomain(RepoDomain.FINANCE);
+        repo.setType(RepoType.MOBILE);
+        repo.setDescription("RepoDescription");
+        repo.setUserData(true);
+        repo.setFullName("username/repo_name");
+        repo.setOwner(user);
+        repo.setUrl("www.url.com");
+        repo.setHookUrl("www.hook.com");
+        repo.setHooksUrl("www.hooks.com");
+        repo.setBranchesUrl("www.branches.com");
+        repo.setCloneUrl("www.clone.com");
+        repo.setHtmlUrl("www.html.com");
+        repo.setGithubId(4L);
+
+        // Repository is saved in database
+        repoRepository.save(repo);
+
+        // Repo update parameters
+        JSONObject repoUpdateParameters = new JSONObject();
+        repoUpdateParameters.put("full_name", "username/repo_name");
+        // Empty repo name, not allowed
+        repoUpdateParameters.put("repo_name", "");
+        repoUpdateParameters.put("description", "New description");
+        // Not a valid option
+        repoUpdateParameters.put("type", "FOOTBALL");
+        // Not a valid option
+        repoUpdateParameters.put("domain", "SPAIN");
+        repoUpdateParameters.put("user_data", false);
+        repoUpdateParameters.put("security", 2);
+        repoUpdateParameters.put("availability", 2);
+
+        HttpEntity<String> updateRepoRequest = new HttpEntity<>(repoUpdateParameters.toString(), headers);
+
+        Long repo_id = repoRepository.findByFullName("username/repo_name").getId();
+
+        // PUT to update repository information
+        ResponseEntity<Repo> updateResponse = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.PUT, updateRepoRequest, Repo.class);
+
+        // Expected BAD REQUEST since repository name is empty and some parameters
+        // option does not exist
+        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        // GET repository to retrieve the initial repo
+        ResponseEntity<Repo> getResponse = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.GET, new HttpEntity<>("", headers),
+                Repo.class);
+
+        // Check that parameters have not changed after the insertion
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getRepoName()).isEqualTo("Repository Name");
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getSecurity()).isEqualTo(5);
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getAvailability()).isEqualTo(3);
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getDomain()).isEqualTo(RepoDomain.FINANCE);
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getType()).isEqualTo(RepoType.MOBILE);
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getDescription()).isEqualTo("RepoDescription");
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getUserData()).isTrue();
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getFullName()).isEqualTo("username/repo_name");
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getOwner().getId()).isEqualTo(userID);
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getUrl()).isEqualTo("www.url.com");
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getHookUrl()).isEqualTo("www.hook.com");
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getHooksUrl()).isEqualTo("www.hooks.com");
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getBranchesUrl()).isEqualTo("www.branches.com");
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getCloneUrl()).isEqualTo("www.clone.com");
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getHtmlUrl()).isEqualTo("www.html.com");
+    }
+
+    @Test
+    @DisplayName("POST repo/{id} -> DELETE repo/{id} -> Valid deletion")
+    void deleteRepoOk() throws Exception {
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("updateRepoBadTest",
+                "updateRepoBadTest", "updateRepoBadTest@gmail.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+        long userID = Objects.requireNonNull(loginResponse.getBody()).getId();
+
+        UserEntity user = userService.fetch(userID);
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+        // Creation of a repo
+        Repo repo = mockRepo("", user);
+        // Repo parameter setting
+        repo.setRepoName("Repository Name3");
+        repo.setSecurity(5);
+        repo.setAvailability(3);
+        repo.setDomain(RepoDomain.FINANCE);
+        repo.setType(RepoType.MOBILE);
+        repo.setDescription("RepoDescription");
+        repo.setUserData(true);
+        repo.setFullName("username/repo_name2");
+        repo.setOwner(user);
+        repo.setUrl("www.url.com");
+        repo.setHookUrl("www.hook.com");
+        repo.setHooksUrl("www.hooks.com");
+        repo.setBranchesUrl("www.branches.com");
+        repo.setCloneUrl("www.clone.com");
+        repo.setHtmlUrl("www.html.com");
+        repo.setGithubId(5L);
+
+        // Repository is saved in database
+        repoRepository.save(repo);
+
+        Long repo_id = repoRepository.findByFullName("username/repo_name2").getId();
+
+        // DELETE repository
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.DELETE, new HttpEntity<>("", headers),
+                String.class);
+
+        // Expected OK since repository has been correctly deleted
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // GET request to retrieve the repo
+        ResponseEntity<Repo> r = this.restTemplate.exchange("http://localhost:" + port + "/api/repo/" + repo_id,
+                HttpMethod.GET, new HttpEntity<>("", headers), Repo.class);
+
+        // NOT FOUND is expected since the repository has been deleted
+        assertThat(r.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+    }
+
+    @Test
+    @DisplayName("POST repo/{id} -> DELETE repo/{id} -> Valid deletion")
+    void deleteRepoNotFound() throws Exception {
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("deleteRepoNotExist",
+                "deleteRepoNotExist", "deleteRepoNotExist@gmail.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+        long repo_id = -1L;
+
+        // DELETE repository
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.DELETE, new HttpEntity<>("", headers),
+                String.class);
+
+        // Expected NOT FOUND since repository does not exist
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+    }
+
+    @Test
+    @DisplayName("POST repo/{id} -> DELETE repo/{id} -> Valid deletion")
+    void updateRepoNotFound() throws Exception {
+        // Register user and login
+        ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("deleteRepoNotExist",
+                "deleteRepoNotExist", "deleteRepoNotExist@gmail.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            headers.add("Cookie", loginCookie);
+
+        // Repo update parameters
+        JSONObject repoUpdateParameters = new JSONObject();
+        repoUpdateParameters.put("full_name", "username/repo_name");
+        // Empty repo name, not allowed
+        repoUpdateParameters.put("repo_name", "");
+        repoUpdateParameters.put("description", "New description");
+        // Not a valid option
+        repoUpdateParameters.put("type", "FOOTBALL");
+        // Not a valid option
+        repoUpdateParameters.put("domain", "SPAIN");
+        repoUpdateParameters.put("user_data", false);
+        repoUpdateParameters.put("security", 2);
+        repoUpdateParameters.put("availability", 2);
+
+        HttpEntity<String> updateRepoRequest = new HttpEntity<>(repoUpdateParameters.toString(), headers);
+
+        long repo_id = -1L;
+
+        // UPDATE repository
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo_id, HttpMethod.PUT, updateRepoRequest, String.class);
+
+        // Expected BAD REQUEST since repository does not exist
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+    }
+
+    private Repo mockRepo(String fullName, UserEntity user) {
+        Repo repo = Repo.builder()
+                .owner(user)
+                .description("test")
+                .type(RepoType.WEBSITE)
+                .domain(RepoDomain.FINANCE)
+                .userData(true)
+                .security(0)
+                .availability(0)
+                .fullName(fullName)
+                .repoName("test")
+                .url("test")
+                .htmlUrl("test")
+                .hooksUrl("test")
+                .hookUrl("test")
+                .branchesUrl("test")
+                .cloneUrl("test")
+                .build();
+
+        repo.getUsers().add(user);
+
+        return repo;
     }
 
 }

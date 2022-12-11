@@ -1,20 +1,24 @@
 package com.dsec.backend.controller;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.UserAssembler;
 import com.dsec.backend.model.user.LoginDTO;
 import com.dsec.backend.model.user.UserRegisterDTO;
 import com.dsec.backend.service.UserService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,7 +36,7 @@ public class AuthController {
 
 		UserEntity entity = userService.register(userRegisterDTO);
 
-		URI uri = ServletUriComponentsBuilder.fromPath("api/users/{id}")
+		URI uri = UriComponentsBuilder.fromPath("api/users/{id}")
 				.buildAndExpand(entity.getId()).toUri();
 
 		return ResponseEntity.created(uri).body(userAssembler.toModel(entity));
