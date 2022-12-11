@@ -14,15 +14,14 @@ import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.exception.EntityAlreadyExistsException;
 import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.repo.CreateRepoDTO;
 import com.dsec.backend.repository.RepoRepository;
 import com.dsec.backend.security.UserPrincipal;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class RepoServiceImpl implements RepoService {
 
@@ -43,19 +42,21 @@ public class RepoServiceImpl implements RepoService {
         }
 
         // New repo is created using GitHub client service
-        Repo repo = githubClientService.getRepo(fullName, jwt).block();
+        RepoDTO repoDto = githubClientService.getRepo(fullName, jwt).block();
+
+        Repo repo = new Repo();
+        BeanUtils.copyProperties(Objects.requireNonNull(repoDto), repo);
+        repo.setGithubId(repoDto.getId());
 
         // User is fetched from the jwt token, it is also the owner of the repo
         UserEntity jwtUser = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
         UserEntity user = userService.fetch(jwtUser.getId());
 
         // Setting repository parameters from DTO
-        BeanUtils.copyProperties(createRepoDTO, Objects.requireNonNull(repo));
+        BeanUtils.copyProperties(createRepoDTO, repo);
 
         repo.getUsers().add(user);
         repo.setOwner(user);
-
-        log.info("FullName={} CreateRepoDTO={}, Repo={}", fullName, createRepoDTO, repo);
 
         String url = githubClientService.createWebHook(fullName, jwt).block();
 

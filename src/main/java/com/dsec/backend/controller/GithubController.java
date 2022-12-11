@@ -1,5 +1,7 @@
 package com.dsec.backend.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dsec.backend.model.github.RepoDTO;
+import com.dsec.backend.model.github.UserDTO;
 import com.dsec.backend.model.github.WebhookDTO;
 import com.dsec.backend.service.GithubClientService;
 import com.dsec.backend.service.WebHookService;
@@ -28,17 +32,17 @@ public class GithubController {
     private final WebHookService webHookService;
 
     @GetMapping("/user")
-    public Mono<String> getUser(@AuthenticationPrincipal Jwt jwt) {
+    public Mono<UserDTO> getUser(@AuthenticationPrincipal Jwt jwt) {
         return githubClientService.getUser(jwt);
     }
 
     @GetMapping("/user/repos")
-    public Mono<String> getRepos(@AuthenticationPrincipal Jwt jwt) {
+    public Mono<List<RepoDTO>> getRepos(@AuthenticationPrincipal Jwt jwt) {
         return githubClientService.getRepos(jwt);
     }
 
     @PostMapping("/webhook")
-    public ResponseEntity<?> webhook(@RequestBody WebhookDTO body) {
+    public ResponseEntity<Object> webhook(@RequestBody WebhookDTO body) {
         log.info("Webhook triggered {}", body);
 
         webHookService.webhook(body);

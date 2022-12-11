@@ -21,7 +21,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class RepoDTO {
     private Long id;
 
@@ -38,8 +38,6 @@ public class RepoDTO {
     @JsonAlias("hooks_url")
     @URL
     private String hooksUrl;
-
-    private String hookUrl;
 
     @JsonAlias("branches_url")
     @URL
