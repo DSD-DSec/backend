@@ -1,10 +1,10 @@
 package com.dsec.backend.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.repository.UserRepository;
 
@@ -13,7 +13,6 @@ public class MyUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    @Autowired
     public MyUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }

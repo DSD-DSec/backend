@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -38,7 +37,6 @@ public class WebHookServiceImpl implements WebHookService {
 
     private final String toolUrl;
 
-    @Autowired
     public WebHookServiceImpl(AsyncService asyncService, RepoService repoService, UserService userService,
             JobRepository jobRepository, @Value("${tool.url}") String toolUrl) {
         this.asyncService = asyncService;
@@ -67,9 +65,9 @@ public class WebHookServiceImpl implements WebHookService {
 
             log.info("Tool url {}", toolUrl);
 
-            Repo repo = repoService.fetch(dto.getRepoDto().getId());
+            Repo repo = repoService.fetchByGithubId(dto.getRepoDto().getId());
 
-            UserEntity userEntity = repo.getUsers().stream().findFirst().get();
+            UserEntity userEntity = repo.getOwner();
 
             String token = userService.getToken(userEntity);
 
