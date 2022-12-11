@@ -423,6 +423,7 @@ public class BackendTest {
         Repo repo = mockRepo("RepoTest", user);
 
         repo.getUsers().add(user);
+        repo.setGithubId(1L);
         repo = repoRepository.save(repo);
 
         // GET request to retrieve all jobs from the repo with id+1
@@ -634,6 +635,7 @@ public class BackendTest {
         repo.setBranchesUrl("www.branches.com");
         repo.setCloneUrl("www.clone.com");
         repo.setHtmlUrl("www.html.com");
+        repo.setGithubId(2L);
 
         // Repository is saved in database
         repo = repoRepository.save(repo);
@@ -702,18 +704,18 @@ public class BackendTest {
         repo.setBranchesUrl("www.branches.com");
         repo.setCloneUrl("www.clone.com");
         repo.setHtmlUrl("www.html.com");
+        repo.setGithubId(3L);
 
         // Repository is saved in database
         repoRepository.save(repo);
 
         // Repo update parameters
         JSONObject repoUpdateParameters = new JSONObject();
-        repoUpdateParameters.put("full_name", "username/repo_name4");
-        repoUpdateParameters.put("repo_name", "NewName2");
+        repoUpdateParameters.put("repoName", "NewName2");
         repoUpdateParameters.put("description", "New description");
         repoUpdateParameters.put("type", "WEBSITE");
         repoUpdateParameters.put("domain", "SPORT");
-        repoUpdateParameters.put("user_data", false);
+        repoUpdateParameters.put("userData", false);
         repoUpdateParameters.put("security", 2);
         repoUpdateParameters.put("availability", 2);
 
@@ -736,7 +738,6 @@ public class BackendTest {
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getType()).isEqualTo(RepoType.WEBSITE);
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getDescription()).isEqualTo("New description");
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getUserData()).isFalse();
-        assertThat(Objects.requireNonNull(updateResponse.getBody()).getFullName()).isEqualTo("username/repo_name4");
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getOwner().getId()).isEqualTo(userID);
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getUrl()).isEqualTo("www.url.com");
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getHookUrl()).isEqualTo("www.hook.com");
@@ -783,6 +784,7 @@ public class BackendTest {
         repo.setBranchesUrl("www.branches.com");
         repo.setCloneUrl("www.clone.com");
         repo.setHtmlUrl("www.html.com");
+        repo.setGithubId(4L);
 
         // Repository is saved in database
         repoRepository.save(repo);
@@ -872,6 +874,7 @@ public class BackendTest {
         repo.setBranchesUrl("www.branches.com");
         repo.setCloneUrl("www.clone.com");
         repo.setHtmlUrl("www.html.com");
+        repo.setGithubId(5L);
 
         // Repository is saved in database
         repoRepository.save(repo);

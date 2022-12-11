@@ -36,6 +36,8 @@ public class GithubClientServiceImpl implements GithubClientService {
     private static final String BASE_URL = "https://api.github.com";
     public static final int TIMEOUT = 5000;
 
+    private static final String BEARER = "Bearer ";
+
     private final WebClient webClient;
     private final UserService userService;
 
@@ -75,6 +77,7 @@ public class GithubClientServiceImpl implements GithubClientService {
                 .map(this::validate).map(dto -> {
                     Repo repo = new Repo();
                     BeanUtils.copyProperties(dto, repo);
+                    repo.setGithubId(dto.getId());
                     return repo;
                 });
     }
@@ -89,7 +92,7 @@ public class GithubClientServiceImpl implements GithubClientService {
                 .build();
 
         return webClient.post().uri("/repos/" + fullRepoName + "/hooks")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .header(HttpHeaders.AUTHORIZATION, BEARER + token)
                 .body(Mono.just(createWebhook), CreateWebhook.class)
                 .retrieve().bodyToMono(UrlDTO.class).map(this::validate).map(UrlDTO::getUrl);
     }
@@ -98,12 +101,12 @@ public class GithubClientServiceImpl implements GithubClientService {
     public void triggerHook(String hookUrl, Jwt jwt) {
         String token = userService.getToken(jwt);
         webClient.post().uri(hookUrl + "/tests")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                .retrieve().toBodilessEntity().subscribe((e) -> log.info("Test webhook {}", e));
+                .header(HttpHeaders.AUTHORIZATION, BEARER + token)
+                .retrieve().toBodilessEntity().subscribe(e -> log.info("Test webhook {}", e));
     }
 
     private ResponseSpec get(String path, String token) {
-        return webClient.get().uri(path).header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+        return webClient.get().uri(path).header(HttpHeaders.AUTHORIZATION, BEARER + token)
                 .retrieve();
     }
 

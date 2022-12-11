@@ -1,5 +1,7 @@
 package com.dsec.backend.service;
 
+import java.util.Objects;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -12,14 +14,15 @@ import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.exception.EntityAlreadyExistsException;
 import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.exception.ForbidenAccessException;
-import com.dsec.backend.model.github.RepoDTO;
-import com.dsec.backend.model.repo.RepoUpdateDTO;
+import com.dsec.backend.model.repo.CreateRepoDTO;
 import com.dsec.backend.repository.RepoRepository;
 import com.dsec.backend.security.UserPrincipal;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class RepoServiceImpl implements RepoService {
 
@@ -33,37 +36,32 @@ public class RepoServiceImpl implements RepoService {
     }
 
     @Override
-    public Repo createRepo(RepoDTO parameters, Jwt jwt) {
+    public Repo createRepo(String fullName, CreateRepoDTO createRepoDTO, Jwt jwt) {
         // Repository already existing
-        if (repoRepository.existsByFullName(parameters.getFullName())) {
+        if (repoRepository.existsByFullName(fullName)) {
             throw new EntityAlreadyExistsException();
         }
 
         // New repo is created using GitHub client service
-        Repo repo = githubClientService.getRepo(parameters.getFullName(), jwt).block();
+        Repo repo = githubClientService.getRepo(fullName, jwt).block();
+
         // User is fetched from the jwt token, it is also the owner of the repo
         UserEntity jwtUser = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
         UserEntity user = userService.fetch(jwtUser.getId());
 
         // Setting repository parameters from DTO
-        assert repo != null;
-        repo.setRepoName(parameters.getRepoName());
-        repo.setOwner(user);
-        repo.setDescription(parameters.getDescription());
-        repo.setType(parameters.getType());
-        repo.setDomain(parameters.getDomain());
-        repo.setUserData(parameters.getUserData());
-        repo.setSecurity(parameters.getSecurity());
-        repo.setAvailability(parameters.getAvailability());
+        BeanUtils.copyProperties(createRepoDTO, Objects.requireNonNull(repo));
 
-        user = userService.fetch(user.getId());
         repo.getUsers().add(user);
-        String url = githubClientService.createWebHook(parameters.getFullName(), jwt).block();
+        repo.setOwner(user);
+
+        log.info("FullName={} CreateRepoDTO={}, Repo={}", fullName, createRepoDTO, repo);
+
+        String url = githubClientService.createWebHook(fullName, jwt).block();
+
         repo.setHookUrl(url);
 
-        BeanUtils.copyProperties(repoRepository.save(repo), parameters);
-
-        return repo;
+        return repoRepository.save(repo);
     }
 
     @Override
@@ -79,20 +77,19 @@ public class RepoServiceImpl implements RepoService {
     }
 
     @Override
-    public Repo updateRepo(long id, Repo repo, RepoUpdateDTO repoUpdateDTO, Jwt jwt) {
+    public Repo updateRepo(long id, Repo repo, CreateRepoDTO createRepoDTO, Jwt jwt) {
         UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
         if (!userJwt.getId().equals(repo.getOwner().getId()))
             throw new ForbidenAccessException("Invalid repo update.");
 
-        repo.setFullName(repoUpdateDTO.getFullName());
-        repo.setRepoName(repoUpdateDTO.getRepoName());
-        repo.setDescription(repoUpdateDTO.getDescription());
-        repo.setType(repoUpdateDTO.getType());
-        repo.setDomain(repoUpdateDTO.getDomain());
-        repo.setUserData(repoUpdateDTO.getUserData());
-        repo.setSecurity(repoUpdateDTO.getSecurity());
-        repo.setAvailability(repoUpdateDTO.getAvailability());
+        repo.setRepoName(createRepoDTO.getRepoName());
+        repo.setDescription(createRepoDTO.getDescription());
+        repo.setType(createRepoDTO.getType());
+        repo.setDomain(createRepoDTO.getDomain());
+        repo.setUserData(createRepoDTO.getUserData());
+        repo.setSecurity(createRepoDTO.getSecurity());
+        repo.setAvailability(createRepoDTO.getAvailability());
 
         return repoRepository.save(repo);
     }

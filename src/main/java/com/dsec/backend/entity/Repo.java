@@ -16,10 +16,10 @@ import javax.persistence.ManyToOne;
 
 import org.hibernate.Hibernate;
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 import org.springframework.lang.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonRootName;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,13 +35,16 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@JsonRootName(value = "repo")
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Relation(collectionRelation = "repos")
 public class Repo extends RepresentationModel<Repo> {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(nullable = false)
     private Long id;
+
+    @Column(nullable = false, unique=true)
+    private Long githubId;
 
     @ManyToOne(optional = false)
     private UserEntity owner;

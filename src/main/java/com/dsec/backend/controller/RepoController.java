@@ -21,8 +21,7 @@ import com.dsec.backend.entity.Job;
 import com.dsec.backend.entity.Repo;
 import com.dsec.backend.hateoas.RepoAssembler;
 import com.dsec.backend.model.EmptyDTO;
-import com.dsec.backend.model.github.RepoDTO;
-import com.dsec.backend.model.repo.RepoUpdateDTO;
+import com.dsec.backend.model.repo.CreateRepoDTO;
 import com.dsec.backend.service.JobService;
 import com.dsec.backend.service.RepoService;
 
@@ -45,11 +44,12 @@ public class RepoController {
         return ResponseEntity.ok(new EmptyDTO());
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<Repo> createRepo(@Valid @RequestBody RepoDTO repoDTO,
+    @PostMapping("/{owner}/{repo}")
+    public ResponseEntity<Repo> createRepo(@PathVariable("owner") String owner,
+    @PathVariable("repo") String repoName, @Valid @RequestBody CreateRepoDTO createRepoDTO,
                                            @AuthenticationPrincipal Jwt jwt) {
 
-        Repo repo = repoService.createRepo(repoDTO, jwt);
+        Repo repo = repoService.createRepo(owner + "/" + repoName, createRepoDTO, jwt);
 
         return ResponseEntity.ok(repoAssembler.toModel(repo));
     }
@@ -72,10 +72,10 @@ public class RepoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Repo> updateRepo(@PathVariable("id") long id, @AuthenticationPrincipal Jwt jwt,
-                                           @RequestBody @Valid RepoUpdateDTO repoUpdateDTO) {
+                                           @RequestBody @Valid CreateRepoDTO createRepoDTO) {
         Repo repo = repoService.fetch(id);
 
-        repoService.updateRepo(id, repo, repoUpdateDTO, jwt);
+        repoService.updateRepo(id, repo, createRepoDTO, jwt);
 
         return ResponseEntity.ok(repoAssembler.toModel(repo));
     }
