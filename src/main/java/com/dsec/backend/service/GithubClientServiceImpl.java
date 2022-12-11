@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -18,10 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 
-import com.dsec.backend.entity.Repo;
 import com.dsec.backend.model.github.CreateWebhook;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.github.UrlDTO;
+import com.dsec.backend.model.github.UserDTO;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -62,24 +62,21 @@ public class GithubClientServiceImpl implements GithubClientService {
     }
 
     @Override
-    public Mono<String> getRepos(Jwt jwt) {
-        return get("/user/repos", userService.getToken(jwt)).bodyToMono(String.class);
-    }
-
-    @Override
-    public Mono<String> getUser(Jwt jwt) {
-        return get("/user", userService.getToken(jwt)).bodyToMono(String.class);
-    }
-
-    @Override
-    public Mono<Repo> getRepo(String fullRepoName, Jwt jwt) {
-        return get("/repos/" + fullRepoName, userService.getToken(jwt)).bodyToMono(RepoDTO.class)
-                .map(this::validate).map(dto -> {
-                    Repo repo = new Repo();
-                    BeanUtils.copyProperties(dto, repo);
-                    repo.setGithubId(dto.getId());
-                    return repo;
+    public Mono<List<RepoDTO>> getRepos(Jwt jwt) {
+        return get("/user/repos", userService.getToken(jwt))
+                .bodyToMono(new ParameterizedTypeReference<List<RepoDTO>>() {
                 });
+    }
+
+    @Override
+    public Mono<UserDTO> getUser(Jwt jwt) {
+        return get("/user", userService.getToken(jwt)).bodyToMono(UserDTO.class).map(this::validate);
+    }
+
+    @Override
+    public Mono<RepoDTO> getRepo(String fullRepoName, Jwt jwt) {
+        return get("/repos/" + fullRepoName, userService.getToken(jwt)).bodyToMono(RepoDTO.class)
+                .map(this::validate);
     }
 
     @Override
@@ -110,12 +107,8 @@ public class GithubClientServiceImpl implements GithubClientService {
                 .retrieve();
     }
 
-    private RepoDTO validate(@Valid RepoDTO repoDTO) {
-        return repoDTO;
-    }
-
-    private UrlDTO validate(@Valid UrlDTO dto) {
-        return dto;
+    private <T> T validate(@Valid T t) {
+        return t;
     }
 
 }
