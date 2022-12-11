@@ -23,4 +23,6 @@ public interface RepoService {
 
     void triggerHook(long id, Jwt jwt);
 
+    Repo fetchByGithubId(long githubId);
+
 }

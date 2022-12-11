@@ -121,6 +121,12 @@ public class RepoServiceImpl implements RepoService {
     }
 
     @Override
+    public Repo fetchByGithubId(long githubId) {
+        return repoRepository.findByGithubId(githubId)
+                .orElseThrow(() -> new EntityMissingException(Repo.class, githubId));
+    }
+
+    @Override
     public void triggerHook(long id, Jwt jwt) {
         Repo repo = fetch(id);
         githubClientService.triggerHook(repo.getHookUrl(), jwt);
