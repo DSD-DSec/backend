@@ -101,7 +101,7 @@ public class RepoServiceImpl implements RepoService {
     public Repo getById(long id, Jwt jwt) {
 
         // For now, only the owner of the repository is able to retrieve it
-        // TODO: all the team members must be able to retrieve the repository project
+        // to do: all the team members must be able to retrieve the repository project
         // (if teams will be implemented)
 
         UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();

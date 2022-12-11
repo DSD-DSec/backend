@@ -74,7 +74,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/users returns unauthorized if the user is not logged in")
     @Order(0)
-    public void getUsersUnauthorizedTest() {
+    void getUsersUnauthorizedTest() {
 
         // GET request to retrieve all the users
         ResponseEntity<String> response = this.restTemplate.getForEntity("http://localhost:" + port + "/api/users",
@@ -88,7 +88,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/register register user")
     @Order(1)
-    public void registerUser() throws Exception {
+    void registerUser() throws Exception {
         String firstName = "Janko";
         String lastName = "Bananko";
         String email = "janko.bananko@gmail.com";
@@ -128,7 +128,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/register -> /api/auth/login returns ok response")
     @Order(2)
-    public void registrationLoginOk() throws Exception {
+    void registrationLoginOk() throws Exception {
         String firstName = "Janko";
         String lastName = "Bananko";
         String email = "janko.bananko1@gmail.com";
@@ -174,7 +174,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/auth/login returns an exception if the user does not exist")
     @Order(3)
-    public void unauthorizedLoginTest() throws Exception {
+    void unauthorizedLoginTest() throws Exception {
 
         // Headers of the request
         HttpHeaders headers = new HttpHeaders();
@@ -200,7 +200,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/register returns bad request if the password/email constraints are not respected")
     @Order(4)
-    public void wrongRegisterTest() throws Exception {
+    void wrongRegisterTest() throws Exception {
 
         // Headers of the request
         HttpHeaders headers = new HttpHeaders();
@@ -228,7 +228,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/logout returns unauthorized if user is not logged in")
     @Order(5)
-    public void logoutWithoutLogin() {
+    void logoutWithoutLogin() {
 
         // Headers of the request
         HttpHeaders headers = new HttpHeaders();
@@ -245,7 +245,7 @@ public class BackendTest {
     @Test
     @DisplayName("POST /api/auth/logout returns unauthorized if user is not logged in")
     @Order(6)
-    public void logoutWithoutLogin1() throws Exception {
+    void logoutWithoutLogin1() throws Exception {
 
         // Register user without login
         this.registerUser("Bob", "Miller", "bob.miller@gmail.com");
@@ -263,7 +263,7 @@ public class BackendTest {
     @Test
     @DisplayName("DELETE /api/users/id register, login, delete user")
     @Order(7)
-    public void deleteUserCheck() throws Exception {
+    void deleteUserCheck() throws Exception {
 
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("TestC", "TestC", "testc.testc@gmail.com");
@@ -287,7 +287,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/users register, login, logout, get users unauthorized")
     @Order(8)
-    public void getUsersUnauthorized() throws Exception {
+    void getUsersUnauthorized() throws Exception {
 
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("TestA", "TestA", "testa.testa@gmail.com");
@@ -317,7 +317,7 @@ public class BackendTest {
     @Test
     @DisplayName("PUT /api/users/id register, login, put user")
     @Order(9)
-    public void patchUserCheck() throws Exception {
+    void patchUserCheck() throws Exception {
 
         // // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("TestB", "TestB", "testb.testb@gmail.com");
@@ -349,7 +349,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/users registers n users and check the list")
     @Order(10)
-    public void getUsers() throws Exception {
+    void getUsers() throws Exception {
 
         // Generate and register users
         int registeredUserNumber = 50;
@@ -406,7 +406,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/repo/{repo}/jobs returns not found if repo doesn't exist")
     @Order(11)
-    public void getRepoJobsNotFound() throws Exception {
+    void getRepoJobsNotFound() throws Exception {
 
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -438,7 +438,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/job/{id} returns not found if job doesn't exist")
     @Order(12)
-    public void getJobsNotFound() throws Exception {
+    void getJobsNotFound() throws Exception {
 
         long jobID = 123;
         String repoFullName = "RepoTest";
@@ -467,7 +467,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/repo/{repo}/jobs returns the right jobs list")
     @Order(13)
-    public void getRepoJobs() throws Exception {
+    void getRepoJobs() throws Exception {
 
         // Create jobs for repo with fullName
         String repoFullName = "RepoTest";
@@ -512,7 +512,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/job/{id} check if the returned job is correct")
     @Order(14)
-    public void getJob() throws Exception {
+    void getJob() throws Exception {
 
         // Create a job for repo
         String repoFullName = "RepoTest";
@@ -546,7 +546,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/repo/{repo}/jobs returns forbidden if the user doesn't belong to the repo")
     @Order(15)
-    public void getRepoJobsForbidden() throws Exception {
+    void getRepoJobsForbidden() throws Exception {
 
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -574,7 +574,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET /api/job/{id} returns forbidden if job's repo doesn't belong to the user")
     @Order(16)
-    public void getJobsForbidden() throws Exception {
+    void getJobsForbidden() throws Exception {
 
         long jobID = 1;
 
@@ -599,7 +599,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("GET /repo/{id} returns the correct information")
-    public void getRepoOkTest() throws Exception {
+    void getRepoOkTest() throws Exception {
 
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("getRepoTest", "getRepoTest",
@@ -639,7 +639,8 @@ public class BackendTest {
         repo = repoRepository.save(repo);
 
         // GET repository
-        ResponseEntity<Repo> response = this.restTemplate.exchange("http://localhost:" + port + "/api/repo/" + repo.getId(),
+        ResponseEntity<Repo> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo.getId(),
                 HttpMethod.GET, new HttpEntity<>("", headers), Repo.class);
 
         // Response status is ok since the id of the owner is equal to the id of the
@@ -667,7 +668,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST repo/{id} -> POST repo/{id} -> GET repo/{id} : returns correct information")
-    public void updateRepoOkTest() throws Exception {
+    void updateRepoOkTest() throws Exception {
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("updateRepoOkTest",
                 "updateRepoOkTest", "updateRepoOkTest@gmail.com");
@@ -748,7 +749,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST repo/{id} -> POST repo/{id} -> GET repo/{id} : returns correct information")
-    public void updateRepoBadTest() throws Exception {
+    void updateRepoBadTest() throws Exception {
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("updateRepoBadTest",
                 "updateRepoBadTest", "updateRepoBadTest@gmail.com");
@@ -837,7 +838,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST repo/{id} -> DELETE repo/{id} -> Valid deletion")
-    public void deleteRepoOk() throws Exception {
+    void deleteRepoOk() throws Exception {
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("updateRepoBadTest",
                 "updateRepoBadTest", "updateRepoBadTest@gmail.com");
@@ -896,7 +897,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST repo/{id} -> DELETE repo/{id} -> Valid deletion")
-    public void deleteRepoNotFound() throws Exception {
+    void deleteRepoNotFound() throws Exception {
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("deleteRepoNotExist",
                 "deleteRepoNotExist", "deleteRepoNotExist@gmail.com");
@@ -923,7 +924,7 @@ public class BackendTest {
 
     @Test
     @DisplayName("POST repo/{id} -> DELETE repo/{id} -> Valid deletion")
-    public void updateRepoNotFound() throws Exception {
+    void updateRepoNotFound() throws Exception {
         // Register user and login
         ResponseEntity<UserEntity> loginResponse = this.registrationLoginOk("deleteRepoNotExist",
                 "deleteRepoNotExist", "deleteRepoNotExist@gmail.com");
