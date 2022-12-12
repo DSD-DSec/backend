@@ -9,8 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.UserEntity;
-import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.user.LoginDTO;
 import com.dsec.backend.model.user.UserRegisterDTO;
 import com.dsec.backend.model.user.UserUpdateDTO;
@@ -35,7 +35,7 @@ public interface UserService {
 
 	String getToken(UserEntity user);
 
-    List<RepoDTO> getRepos(long id, Jwt jwt);
+	List<Repo> getUsersRepos(long id, Jwt jwt);
 
-    String getOAuthtoken(Jwt jwt);
+	String getOAuthtoken(Jwt jwt);
 }
