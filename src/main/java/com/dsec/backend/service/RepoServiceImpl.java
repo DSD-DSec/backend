@@ -72,7 +72,11 @@ public class RepoServiceImpl implements RepoService {
         if (!userJwt.getId().equals(repo.getOwner().getId()))
             throw new ForbidenAccessException("Invalid repo deletion.");
 
-        repoRepository.deleteById(repo.getId());
+        String hook = repo.getHookUrl();
+
+        repoRepository.delete(repo);
+
+        githubClientService.deleteWebhook(hook, jwt);
 
         return repo;
     }

@@ -20,4 +20,6 @@ public interface GithubClientService {
     Mono<String> createWebHook(String fullRepoName, Jwt jwt);
 
     void triggerHook(String hookUrl, Jwt jwt);
+
+    void deleteWebhook(String hookUrl, Jwt jwt);
 }

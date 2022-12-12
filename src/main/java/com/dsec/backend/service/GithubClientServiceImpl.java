@@ -102,6 +102,16 @@ public class GithubClientServiceImpl implements GithubClientService {
                 .retrieve().toBodilessEntity().subscribe(e -> log.info("Test webhook {}", e));
     }
 
+    @Override
+    public void deleteWebhook(String hookUrl, Jwt jwt) {
+        String token = userService.getToken(jwt);
+
+        webClient.delete().uri(hookUrl)
+                .header(HttpHeaders.AUTHORIZATION, BEARER + token)
+                .retrieve().toBodilessEntity().subscribe(e -> log.info("Delete webhook {}", e));
+
+    }
+
     private ResponseSpec get(String path, String token) {
         return webClient.get().uri(path).header(HttpHeaders.AUTHORIZATION, BEARER + token)
                 .retrieve();

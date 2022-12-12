@@ -1,8 +1,10 @@
 package com.dsec.backend.entity;
 
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -13,12 +15,16 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 import org.springframework.lang.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.AllArgsConstructor;
@@ -43,10 +49,12 @@ public class Repo extends RepresentationModel<Repo> {
     @Column(nullable = false)
     private Long id;
 
-    @Column(nullable = false, unique=true)
+    @Column(nullable = false, unique = true)
     private Long githubId;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "owner_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private UserEntity owner;
 
     @Column(nullable = false)
@@ -93,9 +101,15 @@ public class Repo extends RepresentationModel<Repo> {
     private String cloneUrl;
 
     @Builder.Default
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.DETACH })
     @JoinTable(name = "repo_users", joinColumns = @JoinColumn(name = "repo_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<UserEntity> users = new java.util.LinkedHashSet<>();
+    private Set<UserEntity> users = new LinkedHashSet<>();
+
+    @Builder.Default
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "repo")
+    @JsonIgnore
+    @ToString.Exclude
+    private Set<Job> jobs = new LinkedHashSet<>();
 
     @Override
     public boolean equals(@Nullable Object o) {
