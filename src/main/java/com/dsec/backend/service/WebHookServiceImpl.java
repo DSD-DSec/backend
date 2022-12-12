@@ -1,7 +1,9 @@
 package com.dsec.backend.service;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -15,8 +17,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.dsec.backend.entity.Job;
 import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.model.GitleaksDTO;
 import com.dsec.backend.model.github.WebhookDTO;
 import com.dsec.backend.repository.JobRepository;
+import com.dsec.backend.util.LocalDateTimeAttributeConverter;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -34,16 +40,18 @@ public class WebHookServiceImpl implements WebHookService {
     private final UserService userService;
     private final JobRepository jobRepository;
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
 
     private final String toolUrl;
 
     public WebHookServiceImpl(AsyncService asyncService, RepoService repoService, UserService userService,
-            JobRepository jobRepository, @Value("${tool.url}") String toolUrl) {
+            JobRepository jobRepository, @Value("${tool.url}") String toolUrl, ObjectMapper objectMapper) {
         this.asyncService = asyncService;
         this.repoService = repoService;
         this.userService = userService;
         this.jobRepository = jobRepository;
         this.toolUrl = toolUrl;
+        this.objectMapper = objectMapper;
 
         HttpClient httpClient = HttpClient.create()
                 .resolver(DefaultAddressResolverGroup.INSTANCE)
@@ -67,6 +75,10 @@ public class WebHookServiceImpl implements WebHookService {
 
             Repo repo = repoService.fetchByGithubId(dto.getRepoDto().getId());
 
+            Job job = Job.builder().startTime(LocalDateTimeAttributeConverter.now()).repo(repo).build();
+
+            job = jobRepository.save(job);
+
             UserEntity userEntity = repo.getOwner();
 
             String token = userService.getToken(userEntity);
@@ -81,7 +93,18 @@ public class WebHookServiceImpl implements WebHookService {
                     .bodyToMono(String.class)
                     .block();
 
-            Job job = Job.builder().log(result).repo(repo).build();
+            try {
+                List<GitleaksDTO> list = objectMapper.readValue(result,
+                        new TypeReference<List<GitleaksDTO>>() {
+                        });
+                job.setLog(list);
+                job.setCompliant(list.isEmpty());
+
+            } catch (final IOException e) {
+                log.error("JSON reading error {result}", result, e);
+            }
+
+            job.setEndTime(LocalDateTimeAttributeConverter.now());
 
             log.info("New job result {}", jobRepository.save(job));
         });

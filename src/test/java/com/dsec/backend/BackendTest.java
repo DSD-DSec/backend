@@ -38,10 +38,12 @@ import com.dsec.backend.entity.RepoDomain;
 import com.dsec.backend.entity.RepoType;
 import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.entity.UserRepo;
+import com.dsec.backend.model.GitleaksDTO;
 import com.dsec.backend.repository.JobRepository;
 import com.dsec.backend.repository.RepoRepository;
 import com.dsec.backend.repository.UserRepoRepository;
 import com.dsec.backend.service.UserService;
+import com.dsec.backend.util.LocalDateTimeAttributeConverter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -450,7 +452,11 @@ public class BackendTest {
 
         long jobID = 123;
         String repoFullName = "RepoTest";
-        jobRepository.save(new Job(jobID, "Debug string1", repoRepository.findByFullName(repoFullName)));
+
+        Job job = Job.builder().id(jobID).startTime(LocalDateTimeAttributeConverter.now())
+                .repo(repoRepository.findByFullName(repoFullName)).build();
+
+        jobRepository.save(job);
 
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -484,7 +490,11 @@ public class BackendTest {
         List<Job> jobs = new ArrayList<>();
 
         for (int i = 0; i < 20; i++) {
-            Job jobEntity = new Job("Debug string" + i, repo);
+
+            Job jobEntity = Job.builder().log(List.of(GitleaksDTO.builder().author("Debug string" + i).build()))
+                    .startTime(LocalDateTimeAttributeConverter.now())
+                    .repo(repo).build();
+
             jobRepository.save(jobEntity);
             jobs.add(jobEntity);
         }
@@ -513,7 +523,7 @@ public class BackendTest {
             Job jobEntity = jobListMap.get(job.getId());
             assertThat(jobEntity).isNotNull();
             assertThat(job.getId()).isEqualTo(jobEntity.getId());
-            assertThat(job.getLog()).isEqualTo(jobEntity.getLog());
+            assertThat(job.getLog().get(0).getAuthor()).isEqualTo(jobEntity.getLog().get(0).getAuthor());
         }
     }
 
@@ -526,7 +536,10 @@ public class BackendTest {
         String repoFullName = "RepoTest";
         Repo repo = repoRepository.findByFullName(repoFullName);
 
-        Job jobEntity = new Job("Output string test", repo);
+        Job jobEntity = Job.builder().log(List.of(GitleaksDTO.builder().author("Output string test").build()))
+                .startTime(LocalDateTimeAttributeConverter.now())
+                .repo(repo).build();
+
         jobRepository.save(jobEntity);
 
         HttpHeaders header = new HttpHeaders();
@@ -548,7 +561,7 @@ public class BackendTest {
         // Check if the inserted job infos are equal to the one obtained with the
         // endpoint
         assertThat(job.getId()).isEqualTo(jobEntity.getId());
-        assertThat(job.getLog()).isEqualTo(jobEntity.getLog());
+        assertThat(job.getLog().get(0).getAuthor()).isEqualTo(jobEntity.getLog().get(0).getAuthor());
     }
 
     @Test
