@@ -42,10 +42,13 @@ public class RepoDTO {
     @JsonAlias("branches_url")
     @URL
     private String branchesUrl;
-    
+
     @JsonAlias("clone_url")
     @URL
     private String cloneUrl;
+
+    @JsonAlias("default_branch")
+    private String defaultBranch;
 
     @Override
     public boolean equals(@Nullable Object o) {

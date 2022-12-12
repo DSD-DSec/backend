@@ -1014,6 +1014,7 @@ public class BackendTest {
                 .hookUrl("test")
                 .branchesUrl("test")
                 .cloneUrl("test")
+                .defaultBranch("master")
                 .build();
 
         return repo;

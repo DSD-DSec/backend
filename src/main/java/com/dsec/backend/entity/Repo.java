@@ -75,6 +75,9 @@ public class Repo extends RepresentationModel<Repo> {
     @Column(nullable = false)
     private String cloneUrl;
 
+    @Column(nullable = false)
+    private String defaultBranch;
+
     @Builder.Default
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "repo", cascade = CascadeType.REMOVE)
     @JsonIgnore
