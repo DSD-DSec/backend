@@ -11,12 +11,14 @@ import org.springframework.stereotype.Service;
 
 import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.entity.UserRepo;
 import com.dsec.backend.exception.EntityAlreadyExistsException;
 import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.exception.ForbidenAccessException;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.repo.CreateRepoDTO;
 import com.dsec.backend.repository.RepoRepository;
+import com.dsec.backend.repository.UserRepoRepository;
 import com.dsec.backend.security.UserPrincipal;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class RepoServiceImpl implements RepoService {
     private final RepoRepository repoRepository;
     private final UserService userService;
     private final GithubClientService githubClientService;
+    private final UserRepoRepository userRepoRepository;
 
     @Override
     public Page<Repo> getRepos(Pageable pageable) {
@@ -54,25 +57,34 @@ public class RepoServiceImpl implements RepoService {
 
         // Setting repository parameters from DTO
         BeanUtils.copyProperties(createRepoDTO, repo);
+        repo.setHookUrl("");
+        repo = repoRepository.save(repo);
 
-        repo.getUsers().add(user);
-        repo.setOwner(user);
+        UserRepo userRepo = new UserRepo(null, user, repo, true);
+        userRepoRepository.save(userRepo);
 
         String url = githubClientService.createWebHook(fullName, jwt).block();
-
         repo.setHookUrl(url);
 
-        return repoRepository.save(repo);
+        repo = repoRepository.saveAndFlush(repo);
+
+        return repo;
     }
 
     @Override
     public Repo deleteRepo(Repo repo, Jwt jwt) {
         UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
-        if (!userJwt.getId().equals(repo.getOwner().getId()))
+        if (!isOwner(repo, userJwt))
             throw new ForbidenAccessException("Invalid repo deletion.");
 
-        repoRepository.deleteById(repo.getId());
+        String hook = repo.getHookUrl();
+
+        repoRepository.delete(repo);
+
+        if(hook.matches("https://api.github.com/repos/.+")){
+            githubClientService.deleteWebhook(hook, jwt);
+        }
 
         return repo;
     }
@@ -81,7 +93,7 @@ public class RepoServiceImpl implements RepoService {
     public Repo updateRepo(long id, Repo repo, CreateRepoDTO createRepoDTO, Jwt jwt) {
         UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
-        if (!userJwt.getId().equals(repo.getOwner().getId()))
+        if (!isOwner(repo, userJwt))
             throw new ForbidenAccessException("Invalid repo update.");
 
         repo.setRepoName(createRepoDTO.getRepoName());
@@ -106,7 +118,7 @@ public class RepoServiceImpl implements RepoService {
 
         Repo repo = fetch(id);
 
-        if (!userJwt.getId().equals(repo.getOwner().getId())) {
+        if (!isOwner(repo, userJwt)) {
             throw new ForbidenAccessException("You have not the permission to access to this Repository.");
         }
 
@@ -131,6 +143,11 @@ public class RepoServiceImpl implements RepoService {
     public void triggerHook(long id, Jwt jwt) {
         Repo repo = fetch(id);
         githubClientService.triggerHook(repo.getHookUrl(), jwt);
+    }
+
+    private boolean isOwner(Repo repo, UserEntity userJwt){
+        return repo.getUserRepos().stream().filter(UserRepo::getIsOwner)
+        .allMatch(ur -> ur.getUser().getId().equals(userJwt.getId()));
     }
 
 }
