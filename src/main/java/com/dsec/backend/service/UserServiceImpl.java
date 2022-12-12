@@ -157,9 +157,9 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public List<RepoDTO> getRepos(long id, Jwt jwt) {
-		return fetch(id).getRepos().stream().map(r -> {
+		return fetch(id).getUserRepos().stream().map(ur -> {
 			RepoDTO repoDTO = new RepoDTO();
-			BeanUtils.copyProperties(r, repoDTO);
+			BeanUtils.copyProperties(ur.getRepo(), repoDTO);
 			return repoDTO;
 		}).collect(Collectors.toList());
 	}

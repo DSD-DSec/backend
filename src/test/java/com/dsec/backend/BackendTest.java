@@ -37,8 +37,10 @@ import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.RepoDomain;
 import com.dsec.backend.entity.RepoType;
 import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.entity.UserRepo;
 import com.dsec.backend.repository.JobRepository;
 import com.dsec.backend.repository.RepoRepository;
+import com.dsec.backend.repository.UserRepoRepository;
 import com.dsec.backend.service.UserService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -70,6 +72,9 @@ public class BackendTest {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepoRepository userRepoRepository;
 
     @Test
     @DisplayName("GET /api/users returns unauthorized if the user is not logged in")
@@ -420,11 +425,13 @@ public class BackendTest {
 
         UserEntity user = userService.fetch(loginResponse.getBody().getId());
 
-        Repo repo = mockRepo("RepoTest", user);
+        Repo repo = mockRepo("RepoTest");
 
-        repo.getUsers().add(user);
         repo.setGithubId(1L);
         repo = repoRepository.save(repo);
+
+        UserRepo userRepo = new UserRepo(null, user, repo, true);
+        userRepoRepository.save(userRepo);
 
         // GET request to retrieve all jobs from the repo with id+1
         ResponseEntity<String> response = this.restTemplate.exchange(
@@ -618,7 +625,7 @@ public class BackendTest {
             headers.add("Cookie", loginCookie);
 
         // Creation of a repo
-        Repo repo = mockRepo("", user);
+        Repo repo = mockRepo("");
         // Repo parameter setting
         repo.setRepoName("RepoName");
         repo.setSecurity(5);
@@ -628,7 +635,6 @@ public class BackendTest {
         repo.setDescription("RepoDescription");
         repo.setUserData(true);
         repo.setFullName("username/repoName");
-        repo.setOwner(user);
         repo.setUrl("www.url.com");
         repo.setHookUrl("www.hook.com");
         repo.setHooksUrl("www.hooks.com");
@@ -639,6 +645,9 @@ public class BackendTest {
 
         // Repository is saved in database
         repo = repoRepository.save(repo);
+
+        UserRepo userRepo = new UserRepo(null, user, repo, true);
+        userRepoRepository.save(userRepo);
 
         // GET repository
         ResponseEntity<Repo> response = this.restTemplate.exchange(
@@ -658,7 +667,8 @@ public class BackendTest {
         assertThat(Objects.requireNonNull(response.getBody()).getDescription()).isEqualTo("RepoDescription");
         assertThat(Objects.requireNonNull(response.getBody()).getUserData()).isTrue();
         assertThat(Objects.requireNonNull(response.getBody()).getFullName()).isEqualTo("username/repoName");
-        assertThat(Objects.requireNonNull(response.getBody()).getOwner().getId()).isEqualTo(userID);
+        // to do: fetch users repos to get this information
+        // assertThat(Objects.requireNonNull(response.getBody()).getOwner().getId()).isEqualTo(userID);
         assertThat(Objects.requireNonNull(response.getBody()).getUrl()).isEqualTo("www.url.com");
         assertThat(Objects.requireNonNull(response.getBody()).getHookUrl()).isEqualTo("www.hook.com");
         assertThat(Objects.requireNonNull(response.getBody()).getHooksUrl()).isEqualTo("www.hooks.com");
@@ -687,7 +697,7 @@ public class BackendTest {
             headers.add("Cookie", loginCookie);
 
         // Creation of a repo
-        Repo repo = mockRepo("", user);
+        Repo repo = mockRepo("");
         // Repo parameter setting
         repo.setRepoName("Repository Name4");
         repo.setSecurity(5);
@@ -697,7 +707,6 @@ public class BackendTest {
         repo.setDescription("RepoDescription");
         repo.setUserData(true);
         repo.setFullName("username/repo_name3");
-        repo.setOwner(user);
         repo.setUrl("www.url.com");
         repo.setHookUrl("www.hook.com");
         repo.setHooksUrl("www.hooks.com");
@@ -708,6 +717,9 @@ public class BackendTest {
 
         // Repository is saved in database
         repoRepository.save(repo);
+
+        UserRepo userRepo = new UserRepo(null, user, repo, true);
+        userRepoRepository.save(userRepo);
 
         // Repo update parameters
         JSONObject repoUpdateParameters = new JSONObject();
@@ -738,7 +750,8 @@ public class BackendTest {
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getType()).isEqualTo(RepoType.WEBSITE);
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getDescription()).isEqualTo("New description");
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getUserData()).isFalse();
-        assertThat(Objects.requireNonNull(updateResponse.getBody()).getOwner().getId()).isEqualTo(userID);
+        // to do: fetch users repos to get this information
+        // assertThat(Objects.requireNonNull(updateResponse.getBody()).getOwner().getId()).isEqualTo(userID);
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getUrl()).isEqualTo("www.url.com");
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getHookUrl()).isEqualTo("www.hook.com");
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getHooksUrl()).isEqualTo("www.hooks.com");
@@ -767,7 +780,7 @@ public class BackendTest {
             headers.add("Cookie", loginCookie);
 
         // Creation of a repo
-        Repo repo = mockRepo("", user);
+        Repo repo = mockRepo("");
         // Repo parameter setting
         repo.setRepoName("Repository Name");
         repo.setSecurity(5);
@@ -777,7 +790,6 @@ public class BackendTest {
         repo.setDescription("RepoDescription");
         repo.setUserData(true);
         repo.setFullName("username/repo_name");
-        repo.setOwner(user);
         repo.setUrl("www.url.com");
         repo.setHookUrl("www.hook.com");
         repo.setHooksUrl("www.hooks.com");
@@ -788,6 +800,9 @@ public class BackendTest {
 
         // Repository is saved in database
         repoRepository.save(repo);
+
+        UserRepo userRepo = new UserRepo(null, user, repo, true);
+        userRepoRepository.save(userRepo);
 
         // Repo update parameters
         JSONObject repoUpdateParameters = new JSONObject();
@@ -829,7 +844,8 @@ public class BackendTest {
         assertThat(Objects.requireNonNull(getResponse.getBody()).getDescription()).isEqualTo("RepoDescription");
         assertThat(Objects.requireNonNull(getResponse.getBody()).getUserData()).isTrue();
         assertThat(Objects.requireNonNull(getResponse.getBody()).getFullName()).isEqualTo("username/repo_name");
-        assertThat(Objects.requireNonNull(getResponse.getBody()).getOwner().getId()).isEqualTo(userID);
+        // to do: fetch users repos to get this information
+        // assertThat(Objects.requireNonNull(getResponse.getBody()).getOwner().getId()).isEqualTo(userID);
         assertThat(Objects.requireNonNull(getResponse.getBody()).getUrl()).isEqualTo("www.url.com");
         assertThat(Objects.requireNonNull(getResponse.getBody()).getHookUrl()).isEqualTo("www.hook.com");
         assertThat(Objects.requireNonNull(getResponse.getBody()).getHooksUrl()).isEqualTo("www.hooks.com");
@@ -857,7 +873,7 @@ public class BackendTest {
             headers.add("Cookie", loginCookie);
 
         // Creation of a repo
-        Repo repo = mockRepo("", user);
+        Repo repo = mockRepo("");
         // Repo parameter setting
         repo.setRepoName("Repository Name3");
         repo.setSecurity(5);
@@ -867,7 +883,6 @@ public class BackendTest {
         repo.setDescription("RepoDescription");
         repo.setUserData(true);
         repo.setFullName("username/repo_name2");
-        repo.setOwner(user);
         repo.setUrl("www.url.com");
         repo.setHookUrl("www.hook.com");
         repo.setHooksUrl("www.hooks.com");
@@ -878,6 +893,9 @@ public class BackendTest {
 
         // Repository is saved in database
         repoRepository.save(repo);
+
+        UserRepo userRepo = new UserRepo(null, user, repo, true);
+        userRepoRepository.save(userRepo);
 
         Long repo_id = repoRepository.findByFullName("username/repo_name2").getId();
 
@@ -967,9 +985,8 @@ public class BackendTest {
 
     }
 
-    private Repo mockRepo(String fullName, UserEntity user) {
+    private Repo mockRepo(String fullName) {
         Repo repo = Repo.builder()
-                .owner(user)
                 .description("test")
                 .type(RepoType.WEBSITE)
                 .domain(RepoDomain.FINANCE)
@@ -985,8 +1002,6 @@ public class BackendTest {
                 .branchesUrl("test")
                 .cloneUrl("test")
                 .build();
-
-        repo.getUsers().add(user);
 
         return repo;
     }

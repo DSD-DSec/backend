@@ -24,8 +24,6 @@ public class JobServiceImpl implements JobService {
 
     private final RepoRepository repoRepo;
 
-    private final UserService userService;
-
     @Override
     public List<Job> getJobsByRepoID(long repoID, Jwt jwt) {
 
@@ -57,7 +55,7 @@ public class JobServiceImpl implements JobService {
     private boolean isUserInRepo(Repo repo, Jwt jwt) {
         long userId = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity().getId();
 
-        return repo.getUsers().contains(userService.fetch(userId));
+        return repo.getUserRepos().stream().anyMatch(o -> o.getUser().getId().equals(userId));
     }
 
 }

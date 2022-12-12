@@ -4,16 +4,7 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 
 import org.hibernate.Hibernate;
 import org.springframework.hateoas.RepresentationModel;
@@ -68,18 +59,12 @@ public class UserEntity extends RepresentationModel<UserEntity> {
 
     @ManyToOne(optional = false)
     private UserRole userRole;
-
-    @Builder.Default
-    @ManyToMany(mappedBy = "users", cascade = {CascadeType.DETACH, CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+    
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     @JsonIgnore
-    @ToString.Exclude
-    private Set<Repo> repos = new LinkedHashSet<>();
-
     @Builder.Default
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "owner")
-    @JsonIgnore
     @ToString.Exclude
-    private Set<Repo> ownedRepos = new LinkedHashSet<>();
+    private Set<UserRepo> userRepos = new LinkedHashSet<>();
 
     public UserEntity(UserRegisterDTO userRegisterDTO, UserRole userRole,
             PasswordEncoder passwordEncoder) {
