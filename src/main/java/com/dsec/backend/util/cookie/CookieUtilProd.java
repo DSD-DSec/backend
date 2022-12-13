@@ -7,7 +7,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
@@ -27,7 +26,6 @@ public class CookieUtilProd implements CookieUtil {
     private final String cookieName;
     private final String domain;
 
-    @Autowired
     public CookieUtilProd(JwtUtil jwtUtil, @Value("${jwt.expiration}") long jwtExpiry,
             @Value("${jwt.cookie.name}") String cookieName, @Value("${backend.url}") String backendUrl) {
         this.jwtUtil = jwtUtil;

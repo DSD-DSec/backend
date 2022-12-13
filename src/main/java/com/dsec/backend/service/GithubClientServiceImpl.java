@@ -4,12 +4,13 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -18,10 +19,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 
-import com.dsec.backend.entity.Repo;
 import com.dsec.backend.model.github.CreateWebhook;
+import com.dsec.backend.model.github.GetWebhookDTO;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.github.UrlDTO;
+import com.dsec.backend.model.github.UserDTO;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -35,6 +37,8 @@ import reactor.netty.http.client.HttpClient;
 public class GithubClientServiceImpl implements GithubClientService {
     private static final String BASE_URL = "https://api.github.com";
     public static final int TIMEOUT = 5000;
+
+    private static final String BEARER = "Bearer ";
 
     private final WebClient webClient;
     private final UserService userService;
@@ -60,23 +64,21 @@ public class GithubClientServiceImpl implements GithubClientService {
     }
 
     @Override
-    public Mono<String> getRepos(Jwt jwt) {
-        return get("/user/repos", userService.getToken(jwt)).bodyToMono(String.class);
-    }
-
-    @Override
-    public Mono<String> getUser(Jwt jwt) {
-        return get("/user", userService.getToken(jwt)).bodyToMono(String.class);
-    }
-
-    @Override
-    public Mono<Repo> getRepo(String fullRepoName, Jwt jwt) {
-        return get("/repos/" + fullRepoName, userService.getToken(jwt)).bodyToMono(RepoDTO.class)
-                .map(dto -> validate(dto)).map(dto -> {
-                    Repo repo = new Repo();
-                    BeanUtils.copyProperties(dto, repo);
-                    return repo;
+    public Mono<List<RepoDTO>> getRepos(Jwt jwt) {
+        return get("/user/repos", userService.getToken(jwt))
+                .bodyToMono(new ParameterizedTypeReference<List<RepoDTO>>() {
                 });
+    }
+
+    @Override
+    public Mono<UserDTO> getUser(Jwt jwt) {
+        return get("/user", userService.getToken(jwt)).bodyToMono(UserDTO.class).map(this::validate);
+    }
+
+    @Override
+    public Mono<RepoDTO> getRepo(String fullRepoName, Jwt jwt) {
+        return get("/repos/" + fullRepoName, userService.getToken(jwt)).bodyToMono(RepoDTO.class)
+                .map(this::validate);
     }
 
     @Override
@@ -89,30 +91,54 @@ public class GithubClientServiceImpl implements GithubClientService {
                 .build();
 
         return webClient.post().uri("/repos/" + fullRepoName + "/hooks")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .header(HttpHeaders.AUTHORIZATION, BEARER + token)
                 .body(Mono.just(createWebhook), CreateWebhook.class)
-                .retrieve().bodyToMono(UrlDTO.class).map(dto -> validate(dto)).map(dto -> dto.getUrl());
+                .retrieve().bodyToMono(UrlDTO.class).map(this::validate).map(UrlDTO::getUrl);
     }
 
     @Override
     public void triggerHook(String hookUrl, Jwt jwt) {
         String token = userService.getToken(jwt);
         webClient.post().uri(hookUrl + "/tests")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                .retrieve().toBodilessEntity().subscribe((e) -> log.info("Test webhook {}", e));
+                .header(HttpHeaders.AUTHORIZATION, BEARER + token)
+                .retrieve().toBodilessEntity().subscribe(e -> log.info("Test webhook {}", e));
+    }
+
+    @Override
+    public void deleteWebhook(String hookUrl, Jwt jwt) {
+        String token = userService.getToken(jwt);
+
+        webClient.delete().uri(hookUrl)
+                .header(HttpHeaders.AUTHORIZATION, BEARER + token)
+                .retrieve().toBodilessEntity().doOnError(error -> log.error("error occurred while reading body", error))
+                .doOnCancel(() -> log.error("Get request is cancelled"))
+                .subscribe(e -> log.info("Delete webhook {}", e));
+
+    }
+
+    @Override
+    public Mono<List<GetWebhookDTO>> getWebhooks(String fullRepoName, Jwt jwt) {
+        return get("/repos/" + fullRepoName + "/hooks", userService.getToken(jwt))
+                .bodyToMono(new ParameterizedTypeReference<List<GetWebhookDTO>>() {
+                });
+    }
+
+    @Override
+    public Optional<GetWebhookDTO> getExistingHook(List<GetWebhookDTO> list) {
+        return list.stream().filter(h -> {
+            String url = h.getConfig().get("url");
+
+            return url.matches(backendUrl + "/api/github/webhook");
+        }).findAny();
     }
 
     private ResponseSpec get(String path, String token) {
-        return webClient.get().uri(path).header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+        return webClient.get().uri(path).header(HttpHeaders.AUTHORIZATION, BEARER + token)
                 .retrieve();
     }
 
-    private RepoDTO validate(@Valid RepoDTO repoDTO) {
-        return repoDTO;
-    }
-
-    private UrlDTO validate(@Valid UrlDTO dto) {
-        return dto;
+    private <T> T validate(@Valid T t) {
+        return t;
     }
 
 }

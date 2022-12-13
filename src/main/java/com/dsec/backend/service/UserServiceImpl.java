@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -18,12 +17,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.Role;
 import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.entity.UserRepo;
 import com.dsec.backend.entity.UserRole;
 import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.exception.ForbidenAccessException;
-import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.user.LoginDTO;
 import com.dsec.backend.model.user.UserRegisterDTO;
 import com.dsec.backend.model.user.UserUpdateDTO;
@@ -156,17 +156,13 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public List<RepoDTO> getRepos(long id, Jwt jwt) {
-		return fetch(id).getRepos().stream().map(r -> {
-			RepoDTO repoDTO = new RepoDTO();
-			BeanUtils.copyProperties(r, repoDTO);
-			return repoDTO;
-		}).collect(Collectors.toList());
+	public List<Repo> getUsersRepos(long id, Jwt jwt) {
+		return fetch(id).getUserRepos().stream().map(UserRepo::getRepo).collect(Collectors.toList());
 	}
 
 	@Override
 	public String getOAuthtoken(Jwt jwt) {
-		return jwtUtil.getOAuthToken(UserPrincipal.fromClaims(jwt.getClaims()), Long.valueOf(180));
+		return jwtUtil.getOAuthToken(UserPrincipal.fromClaims(jwt.getClaims()), 180L);
 	}
 
 }

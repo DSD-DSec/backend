@@ -34,6 +34,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Test with Maven
+        run: ./mvnw test
+
       - name: Overwrite properties
         uses: "DamianReeves/write-file-action@master"
         with:

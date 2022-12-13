@@ -1,18 +1,15 @@
 package com.dsec.backend.entity;
 
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
+import org.hibernate.Hibernate;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
+import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.dsec.backend.model.user.UserRegisterDTO;
@@ -62,11 +59,12 @@ public class UserEntity extends RepresentationModel<UserEntity> {
 
     @ManyToOne(optional = false)
     private UserRole userRole;
-
-    @Builder.Default
-    @ManyToMany(mappedBy = "users", fetch = FetchType.LAZY)
+    
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     @JsonIgnore
-    private Set<Repo> repos = new java.util.LinkedHashSet<>();
+    @Builder.Default
+    @ToString.Exclude
+    private Set<UserRepo> userRepos = new LinkedHashSet<>();
 
     public UserEntity(UserRegisterDTO userRegisterDTO, UserRole userRole,
             PasswordEncoder passwordEncoder) {
@@ -75,5 +73,20 @@ public class UserEntity extends RepresentationModel<UserEntity> {
         email = userRegisterDTO.getEmail();
         password = passwordEncoder.encode(userRegisterDTO.getPassword());
         this.userRole = userRole;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o)
+            return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o))
+            return false;
+        UserEntity that = (UserEntity) o;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

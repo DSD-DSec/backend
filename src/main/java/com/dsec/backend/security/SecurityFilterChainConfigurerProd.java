@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import javax.servlet.http.Cookie;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,7 +34,6 @@ public class SecurityFilterChainConfigurerProd {
     private final OAuth2AuthenticationSuccessHandler successHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository;
 
-    @Autowired
     public SecurityFilterChainConfigurerProd(@Value("${jwt.cookie.name}") String cookieName,
             UserDetailsService myUserDetailsService, CookieUtil cookieUtil, CustomOAuth2UserService userService,
             OAuth2AuthenticationSuccessHandler successHandler,
@@ -105,11 +103,8 @@ public class SecurityFilterChainConfigurerProd {
         return (request) -> {
             Optional<Cookie> cookie = cookieUtil.getCookie(request, cookieName);
 
-            if (cookie.isPresent()) {
-                return cookie.get().getValue();
-            }
+            return cookie.map(Cookie::getValue).orElse(null);
 
-            return null;
         };
     }
 
