@@ -82,7 +82,7 @@ public class RepoServiceImpl implements RepoService {
 
         repoRepository.delete(repo);
 
-        if(hook.matches("https://api.github.com/repos/.+")){
+        if (hook.matches("^.+api.github.com.+")) {
             githubClientService.deleteWebhook(hook, jwt);
         }
 
@@ -145,9 +145,9 @@ public class RepoServiceImpl implements RepoService {
         githubClientService.triggerHook(repo.getHookUrl(), jwt);
     }
 
-    private boolean isOwner(Repo repo, UserEntity userJwt){
+    private boolean isOwner(Repo repo, UserEntity userJwt) {
         return repo.getUserRepos().stream().filter(UserRepo::getIsOwner)
-        .allMatch(ur -> ur.getUser().getId().equals(userJwt.getId()));
+                .allMatch(ur -> ur.getUser().getId().equals(userJwt.getId()));
     }
 
 }

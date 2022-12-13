@@ -108,7 +108,9 @@ public class GithubClientServiceImpl implements GithubClientService {
 
         webClient.delete().uri(hookUrl)
                 .header(HttpHeaders.AUTHORIZATION, BEARER + token)
-                .retrieve().toBodilessEntity().subscribe(e -> log.info("Delete webhook {}", e));
+                .retrieve().toBodilessEntity().doOnError(error -> log.error("error occurred while reading body", error))
+                .doOnCancel(() -> log.error("Get request is cancelled"))
+                .subscribe(e -> log.info("Delete webhook {}", e));
 
     }
 
