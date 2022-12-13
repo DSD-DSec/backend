@@ -87,13 +87,14 @@ public class WebHookServiceImpl implements WebHookService {
 
             Map<String, String> map = Map.of("link", urlSplit[0] + "://" + token + "@" + urlSplit[1]);
 
-            String result = webClient.post().uri("/gitleaks")
-                    .body(Mono.just(map), Map.class)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-
+            String result = null;
             try {
+                result = webClient.post().uri("/gitleaks")
+                        .body(Mono.just(map), Map.class)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+
                 List<GitleaksDTO> list = objectMapper.readValue(result,
                         new TypeReference<List<GitleaksDTO>>() {
                         });
@@ -102,6 +103,8 @@ public class WebHookServiceImpl implements WebHookService {
 
             } catch (final IOException e) {
                 log.error("JSON reading error {result}", result, e);
+            } catch (final Exception e) {
+                log.error("Analysis request error", e);
             }
 
             job.setEndTime(LocalDateTimeAttributeConverter.now());

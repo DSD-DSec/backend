@@ -1,6 +1,10 @@
 package com.dsec.backend.service;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
+import javax.transaction.Transactional;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +19,7 @@ import com.dsec.backend.entity.UserRepo;
 import com.dsec.backend.exception.EntityAlreadyExistsException;
 import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.model.github.GetWebhookDTO;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.repo.CreateRepoDTO;
 import com.dsec.backend.repository.RepoRepository;
@@ -38,6 +43,7 @@ public class RepoServiceImpl implements RepoService {
     }
 
     @Override
+    @Transactional
     public Repo createRepo(String fullName, CreateRepoDTO createRepoDTO, Jwt jwt) {
         // Repository already existing
         if (repoRepository.existsByFullName(fullName)) {
@@ -46,6 +52,9 @@ public class RepoServiceImpl implements RepoService {
 
         // New repo is created using GitHub client service
         RepoDTO repoDto = githubClientService.getRepo(fullName, jwt).block();
+
+        List<GetWebhookDTO> hooks = githubClientService.getWebhooks(fullName, jwt).block();
+        Optional<GetWebhookDTO> hook = githubClientService.getExistingHook(hooks);
 
         Repo repo = new Repo();
         BeanUtils.copyProperties(Objects.requireNonNull(repoDto), repo);
@@ -57,16 +66,15 @@ public class RepoServiceImpl implements RepoService {
 
         // Setting repository parameters from DTO
         BeanUtils.copyProperties(createRepoDTO, repo);
-        repo.setHookUrl("");
+
+        String hookUrl = hook.map(GetWebhookDTO::getUrl)
+                .orElseGet(() -> githubClientService.createWebHook(fullName, jwt).block());
+        repo.setHookUrl(hookUrl);
+
         repo = repoRepository.save(repo);
 
         UserRepo userRepo = new UserRepo(null, user, repo, true);
         userRepoRepository.save(userRepo);
-
-        String url = githubClientService.createWebHook(fullName, jwt).block();
-        repo.setHookUrl(url);
-
-        repo = repoRepository.saveAndFlush(repo);
 
         return repo;
     }

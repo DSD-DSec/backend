@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
@@ -19,6 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 
 import com.dsec.backend.model.github.CreateWebhook;
+import com.dsec.backend.model.github.GetWebhookDTO;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.github.UrlDTO;
 import com.dsec.backend.model.github.UserDTO;
@@ -112,6 +114,22 @@ public class GithubClientServiceImpl implements GithubClientService {
                 .doOnCancel(() -> log.error("Get request is cancelled"))
                 .subscribe(e -> log.info("Delete webhook {}", e));
 
+    }
+
+    @Override
+    public Mono<List<GetWebhookDTO>> getWebhooks(String fullRepoName, Jwt jwt) {
+        return get("/repos/" + fullRepoName + "/hooks", userService.getToken(jwt))
+                .bodyToMono(new ParameterizedTypeReference<List<GetWebhookDTO>>() {
+                });
+    }
+
+    @Override
+    public Optional<GetWebhookDTO> getExistingHook(List<GetWebhookDTO> list) {
+        return list.stream().filter(h -> {
+            String url = h.getConfig().get("url");
+
+            return url.matches(backendUrl + "/api/github/webhook");
+        }).findAny();
     }
 
     private ResponseSpec get(String path, String token) {
