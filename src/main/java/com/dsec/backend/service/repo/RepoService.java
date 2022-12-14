@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.repo;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

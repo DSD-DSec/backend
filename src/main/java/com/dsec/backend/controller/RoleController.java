@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.dsec.backend.entity.UserRole;
 import com.dsec.backend.hateoas.RoleAssembler;
-import com.dsec.backend.service.RoleService;
+import com.dsec.backend.service.role.RoleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

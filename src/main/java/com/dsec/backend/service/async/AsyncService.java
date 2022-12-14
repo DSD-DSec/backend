@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.async;
 
 public interface AsyncService {
 

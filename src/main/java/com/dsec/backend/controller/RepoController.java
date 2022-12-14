@@ -22,8 +22,8 @@ import com.dsec.backend.entity.Repo;
 import com.dsec.backend.hateoas.RepoAssembler;
 import com.dsec.backend.model.EmptyDTO;
 import com.dsec.backend.model.repo.CreateRepoDTO;
-import com.dsec.backend.service.JobService;
-import com.dsec.backend.service.RepoService;
+import com.dsec.backend.service.job.JobService;
+import com.dsec.backend.service.repo.RepoService;
 
 import lombok.RequiredArgsConstructor;
 

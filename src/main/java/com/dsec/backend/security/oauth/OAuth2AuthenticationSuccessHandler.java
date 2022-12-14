@@ -1,7 +1,7 @@
 package com.dsec.backend.security.oauth;
 
 import com.dsec.backend.exception.ForbidenAccessException;
-import com.dsec.backend.service.UserService;
+import com.dsec.backend.service.user.UserService;
 import com.dsec.backend.util.JwtUtil;
 import com.dsec.backend.util.cookie.CookieUtil;
 import lombok.RequiredArgsConstructor;

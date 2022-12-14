@@ -1,4 +1,4 @@
-package com.dsec.backend.specification;
+package com.dsec.backend.repository.specification;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;

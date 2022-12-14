@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.role;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;

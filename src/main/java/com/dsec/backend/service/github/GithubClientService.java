@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.github;
 
 import java.util.List;
 import java.util.Optional;

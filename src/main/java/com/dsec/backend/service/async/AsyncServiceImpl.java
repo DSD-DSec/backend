@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.async;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;

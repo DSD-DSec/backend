@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.github;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
 
+import com.dsec.backend.service.user.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;

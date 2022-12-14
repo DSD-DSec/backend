@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.job;
 
 import com.dsec.backend.entity.Job;
 import org.springframework.security.oauth2.jwt.Jwt;

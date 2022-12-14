@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dsec.backend.entity.Job;
-import com.dsec.backend.service.JobService;
+import com.dsec.backend.service.job.JobService;
 
 import lombok.RequiredArgsConstructor;
 

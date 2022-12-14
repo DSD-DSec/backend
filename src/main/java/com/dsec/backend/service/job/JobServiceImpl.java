@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.job;
 
 import java.util.List;
 

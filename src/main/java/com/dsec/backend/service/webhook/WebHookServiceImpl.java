@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.webhook;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.dsec.backend.service.async.AsyncService;
+import com.dsec.backend.service.repo.RepoService;
+import com.dsec.backend.service.user.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,10 +20,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.dsec.backend.entity.Job;
 import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.UserEntity;
-import com.dsec.backend.model.GitleaksDTO;
+import com.dsec.backend.model.tools.GitleaksDTO;
 import com.dsec.backend.model.github.WebhookDTO;
 import com.dsec.backend.repository.JobRepository;
-import com.dsec.backend.util.LocalDateTimeAttributeConverter;
+import com.dsec.backend.util.attrconverter.LocalDateTimeAttributeConverter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

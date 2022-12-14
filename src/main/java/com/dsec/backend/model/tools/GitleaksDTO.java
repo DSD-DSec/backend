@@ -1,4 +1,4 @@
-package com.dsec.backend.model;
+package com.dsec.backend.model.tools;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;

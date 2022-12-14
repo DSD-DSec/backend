@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.repo;
 
 import java.util.List;
 import java.util.Objects;
@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import com.dsec.backend.service.github.GithubClientService;
+import com.dsec.backend.service.user.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

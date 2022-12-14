@@ -1,4 +1,4 @@
-package com.dsec.backend.util;
+package com.dsec.backend.util.attrconverter;
 
 import java.io.IOException;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-import com.dsec.backend.model.GitleaksDTO;
+import com.dsec.backend.model.tools.GitleaksDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

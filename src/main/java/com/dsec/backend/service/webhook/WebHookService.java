@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.webhook;
 
 import com.dsec.backend.model.github.WebhookDTO;
 

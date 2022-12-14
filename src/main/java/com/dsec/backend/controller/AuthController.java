@@ -17,7 +17,7 @@ import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.UserAssembler;
 import com.dsec.backend.model.user.LoginDTO;
 import com.dsec.backend.model.user.UserRegisterDTO;
-import com.dsec.backend.service.UserService;
+import com.dsec.backend.service.user.UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

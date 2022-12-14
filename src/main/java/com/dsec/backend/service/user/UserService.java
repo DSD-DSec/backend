@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.user;
 
 import java.util.List;
 

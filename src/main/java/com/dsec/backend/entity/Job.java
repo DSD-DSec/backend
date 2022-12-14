@@ -18,9 +18,9 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import com.dsec.backend.model.GitleaksDTO;
-import com.dsec.backend.util.GitleaksListConverter;
-import com.dsec.backend.util.LocalDateTimeAttributeConverter;
+import com.dsec.backend.model.tools.GitleaksDTO;
+import com.dsec.backend.util.attrconverter.GitleaksListConverter;
+import com.dsec.backend.util.attrconverter.LocalDateTimeAttributeConverter;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
