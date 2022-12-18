@@ -39,7 +39,7 @@ public class ToolEntity extends RepresentationModel<ToolEntity> {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Language programmingLAnguage;
+    private Language language;
 
 
 }
