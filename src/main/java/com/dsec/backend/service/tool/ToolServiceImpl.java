@@ -41,8 +41,8 @@ public class ToolServiceImpl implements  ToolService{
     }
 
     @Override
-    public ArrayList<Tool> priorityMatrix(Repo repo) {
-        ArrayList<Tool> suggestion = new ArrayList<>();
+    public void priorityMatrix(Repo repo) {
+        List<ToolEntity> suggestion = new ArrayList<>();
         List<ToolEntity> tools = getTools();
 
         int sufficiency = 9;
@@ -58,15 +58,15 @@ public class ToolServiceImpl implements  ToolService{
                 score = 0;
             }
             if (score >= sufficiency) {
-                suggestion.add(tool.getToolName());
+                suggestion.add(toolRepository.findByToolName(tool.getToolName()));
             }
 
         }
 
-        for(Tool toolName: suggestion){
-            toolRepoRepository.save(new ToolRepo(repo, getToolByName(toolName)));
+        for(ToolEntity toolEntity:suggestion) {
+            toolRepoRepository.save(new ToolRepo(null, repo, toolEntity));
         }
-        return suggestion;
+
     }
 
     @Override

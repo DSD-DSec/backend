@@ -1,12 +1,18 @@
 package com.dsec.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import lombok.*;
+import org.hibernate.Hibernate;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @ToString
@@ -40,6 +46,27 @@ public class ToolEntity extends RepresentationModel<ToolEntity> {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Language language;
+
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.REMOVE)
+    @JsonIgnore
+    @Builder.Default
+    @ToString.Exclude
+    private Set<ToolRepo> toolRepos = new LinkedHashSet<>();
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o)
+            return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o))
+            return false;
+        ToolEntity that = (ToolEntity) o;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 
 
     public ToolEntity(Tool toolName, Integer userData, Integer security, Integer privacy, Language language) {

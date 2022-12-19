@@ -2,7 +2,6 @@ package com.dsec.backend.service.tool;
 
 import com.dsec.backend.entity.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public interface ToolService {
@@ -13,7 +12,7 @@ public interface ToolService {
 
     ToolEntity getToolByName(Tool tool);
 
-    ArrayList<Tool> priorityMatrix(Repo repo);
+    void priorityMatrix(Repo repo);
 
     void importData();
 }

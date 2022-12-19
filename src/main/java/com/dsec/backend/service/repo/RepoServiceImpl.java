@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import com.dsec.backend.repository.ToolRepoRepository;
 import com.dsec.backend.service.github.GithubClientService;
 import com.dsec.backend.service.tool.ToolService;
 import com.dsec.backend.service.user.UserService;
@@ -40,6 +41,7 @@ public class RepoServiceImpl implements RepoService {
     private final GithubClientService githubClientService;
     private final UserRepoRepository userRepoRepository;
     private final ToolService toolService;
+    private final ToolRepoRepository toolRepoRepository;
 
     @Override
     public Page<Repo> getRepos(Pageable pageable) {
@@ -79,8 +81,7 @@ public class RepoServiceImpl implements RepoService {
 
         UserRepo userRepo = new UserRepo(null, user, repo, true);
         userRepoRepository.save(userRepo);
-
-        System.out.println(toolService.priorityMatrix(repo));
+        toolService.priorityMatrix(repo);
 
         return repo;
     }
@@ -99,6 +100,7 @@ public class RepoServiceImpl implements RepoService {
         if (hook.matches("^.+api.github.com.+")) {
             githubClientService.deleteWebhook(hook, jwt);
         }
+
 
         return repo;
     }

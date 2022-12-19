@@ -93,6 +93,12 @@ public class Repo extends RepresentationModel<Repo> {
     @ToString.Exclude
     private Set<Job> jobs = new LinkedHashSet<>();
 
+    @Builder.Default
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "repo", cascade = CascadeType.REMOVE)
+    @JsonIgnore
+    @ToString.Exclude
+    private Set<ToolRepo> toolRepos = new LinkedHashSet<>();
+
     @Override
     public boolean equals(@Nullable Object o) {
         if (this == o)
