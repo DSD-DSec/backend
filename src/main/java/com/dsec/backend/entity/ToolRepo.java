@@ -19,11 +19,15 @@ public class ToolRepo {
     private Long id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "tool_id", nullable = false)
-    private ToolEntity selectedTool;
-
-    @ManyToOne(optional = false)
     @JoinColumn(name = "repo_id", nullable = false)
     private Repo repo;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "tool_id", nullable = false)
+    private ToolEntity selectedTool;
+
+    public ToolRepo(Repo repo, ToolEntity selectedTool) {
+        this.repo = repo;
+        this.selectedTool = selectedTool;
+    }
 }

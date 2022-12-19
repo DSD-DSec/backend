@@ -7,6 +7,7 @@ import java.util.Optional;
 import javax.transaction.Transactional;
 
 import com.dsec.backend.service.github.GithubClientService;
+import com.dsec.backend.service.tool.ToolService;
 import com.dsec.backend.service.user.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,7 @@ public class RepoServiceImpl implements RepoService {
     private final UserService userService;
     private final GithubClientService githubClientService;
     private final UserRepoRepository userRepoRepository;
+    private final ToolService toolService;
 
     @Override
     public Page<Repo> getRepos(Pageable pageable) {
@@ -78,6 +80,8 @@ public class RepoServiceImpl implements RepoService {
         UserRepo userRepo = new UserRepo(null, user, repo, true);
         userRepoRepository.save(userRepo);
 
+        System.out.println(toolService.priorityMatrix(repo));
+
         return repo;
     }
 
@@ -112,7 +116,7 @@ public class RepoServiceImpl implements RepoService {
         repo.setDomain(createRepoDTO.getDomain());
         repo.setUserData(createRepoDTO.getUserData());
         repo.setSecurity(createRepoDTO.getSecurity());
-        repo.setAvailability(createRepoDTO.getAvailability());
+        repo.setPrivacy(createRepoDTO.getPrivacy());
 
         return repoRepository.save(repo);
     }

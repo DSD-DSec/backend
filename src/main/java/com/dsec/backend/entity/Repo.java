@@ -48,7 +48,10 @@ public class Repo extends RepresentationModel<Repo> {
     private Integer security;
 
     @Column(nullable = false)
-    private Integer availability;
+    private Integer privacy;
+
+    @Column(nullable = false)
+    private Language language;
 
     // Full name of the GitHub repository, in the form username/repository_name
     @Column(nullable = false, unique = true)

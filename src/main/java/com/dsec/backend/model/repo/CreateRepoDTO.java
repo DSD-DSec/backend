@@ -2,6 +2,7 @@ package com.dsec.backend.model.repo;
 
 import javax.validation.constraints.NotEmpty;
 
+import com.dsec.backend.entity.Language;
 import com.dsec.backend.entity.RepoDomain;
 import com.dsec.backend.entity.RepoType;
 
@@ -33,5 +34,7 @@ public class CreateRepoDTO {
 
     private Integer security;
 
-    private Integer availability;
+    private Integer privacy;
+
+    private Language language;
 }

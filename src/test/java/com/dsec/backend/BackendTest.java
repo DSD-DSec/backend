@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.dsec.backend.entity.*;
 import org.assertj.core.util.Lists;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,12 +33,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.ResourceAccessException;
 
-import com.dsec.backend.entity.Job;
-import com.dsec.backend.entity.Repo;
-import com.dsec.backend.entity.RepoDomain;
-import com.dsec.backend.entity.RepoType;
-import com.dsec.backend.entity.UserEntity;
-import com.dsec.backend.entity.UserRepo;
 import com.dsec.backend.model.tools.GitleaksDTO;
 import com.dsec.backend.repository.JobRepository;
 import com.dsec.backend.repository.RepoRepository;
@@ -425,7 +420,7 @@ public class BackendTest {
         if (loginCookie != null)
             header.add("Cookie", loginCookie);
 
-        UserEntity user = userService.fetch(loginResponse.getBody().getId());
+        UserEntity user = userService.fetch(Objects.requireNonNull(loginResponse.getBody()).getId());
 
         Repo repo = mockRepo("RepoTest");
 
@@ -512,11 +507,11 @@ public class BackendTest {
         // GET jobs of repo
         ResponseEntity<List<Job>> response = this.restTemplate.exchange(
                 "http://localhost:" + port + "/api/repo/" + (repo.getId()) + "/jobs", HttpMethod.GET,
-                new HttpEntity<>("", header), new ParameterizedTypeReference<List<Job>>() {
+                new HttpEntity<>("", header), new ParameterizedTypeReference<>() {
                 });
 
         // Check if the inserted jobs are present in the repo
-        Map<Long, Job> jobListMap = response.getBody().stream()
+        Map<Long, Job> jobListMap = Objects.requireNonNull(response.getBody()).stream()
                 .collect(Collectors.toMap(Job::getId, Function.identity()));
 
         for (Job job : jobs) {
@@ -560,6 +555,7 @@ public class BackendTest {
         Job job = response.getBody();
         // Check if the inserted job infos are equal to the one obtained with the
         // endpoint
+        assert job != null;
         assertThat(job.getId()).isEqualTo(jobEntity.getId());
         assertThat(job.getLog().get(0).getAuthor()).isEqualTo(jobEntity.getLog().get(0).getAuthor());
     }
@@ -642,7 +638,7 @@ public class BackendTest {
         // Repo parameter setting
         repo.setRepoName("RepoName");
         repo.setSecurity(5);
-        repo.setAvailability(3);
+        repo.setPrivacy(3);
         repo.setDomain(RepoDomain.FINANCE);
         repo.setType(RepoType.MOBILE);
         repo.setDescription("RepoDescription");
@@ -674,7 +670,7 @@ public class BackendTest {
         // Check for parameters correctness
         assertThat(Objects.requireNonNull(response.getBody()).getRepoName()).isEqualTo("RepoName");
         assertThat(Objects.requireNonNull(response.getBody()).getSecurity()).isEqualTo(5);
-        assertThat(Objects.requireNonNull(response.getBody()).getAvailability()).isEqualTo(3);
+        assertThat(Objects.requireNonNull(response.getBody()).getPrivacy()).isEqualTo(3);
         assertThat(Objects.requireNonNull(response.getBody()).getDomain()).isEqualTo(RepoDomain.FINANCE);
         assertThat(Objects.requireNonNull(response.getBody()).getType()).isEqualTo(RepoType.MOBILE);
         assertThat(Objects.requireNonNull(response.getBody()).getDescription()).isEqualTo("RepoDescription");
@@ -714,7 +710,7 @@ public class BackendTest {
         // Repo parameter setting
         repo.setRepoName("Repository Name4");
         repo.setSecurity(5);
-        repo.setAvailability(3);
+        repo.setPrivacy(3);
         repo.setDomain(RepoDomain.FINANCE);
         repo.setType(RepoType.MOBILE);
         repo.setDescription("RepoDescription");
@@ -742,7 +738,7 @@ public class BackendTest {
         repoUpdateParameters.put("domain", "SPORT");
         repoUpdateParameters.put("userData", false);
         repoUpdateParameters.put("security", 2);
-        repoUpdateParameters.put("availability", 2);
+        repoUpdateParameters.put("privacy", 2);
 
         HttpEntity<String> updateRepoRequest = new HttpEntity<>(repoUpdateParameters.toString(), headers);
 
@@ -758,7 +754,7 @@ public class BackendTest {
         // Check for parameters correctness
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getRepoName()).isEqualTo("NewName2");
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getSecurity()).isEqualTo(2);
-        assertThat(Objects.requireNonNull(updateResponse.getBody()).getAvailability()).isEqualTo(2);
+        assertThat(Objects.requireNonNull(updateResponse.getBody()).getPrivacy()).isEqualTo(2);
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getDomain()).isEqualTo(RepoDomain.SPORT);
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getType()).isEqualTo(RepoType.WEBSITE);
         assertThat(Objects.requireNonNull(updateResponse.getBody()).getDescription()).isEqualTo("New description");
@@ -797,7 +793,7 @@ public class BackendTest {
         // Repo parameter setting
         repo.setRepoName("Repository Name");
         repo.setSecurity(5);
-        repo.setAvailability(3);
+        repo.setPrivacy(3);
         repo.setDomain(RepoDomain.FINANCE);
         repo.setType(RepoType.MOBILE);
         repo.setDescription("RepoDescription");
@@ -829,7 +825,7 @@ public class BackendTest {
         repoUpdateParameters.put("domain", "SPAIN");
         repoUpdateParameters.put("user_data", false);
         repoUpdateParameters.put("security", 2);
-        repoUpdateParameters.put("availability", 2);
+        repoUpdateParameters.put("privacy", 2);
 
         HttpEntity<String> updateRepoRequest = new HttpEntity<>(repoUpdateParameters.toString(), headers);
 
@@ -851,7 +847,7 @@ public class BackendTest {
         // Check that parameters have not changed after the insertion
         assertThat(Objects.requireNonNull(getResponse.getBody()).getRepoName()).isEqualTo("Repository Name");
         assertThat(Objects.requireNonNull(getResponse.getBody()).getSecurity()).isEqualTo(5);
-        assertThat(Objects.requireNonNull(getResponse.getBody()).getAvailability()).isEqualTo(3);
+        assertThat(Objects.requireNonNull(getResponse.getBody()).getPrivacy()).isEqualTo(3);
         assertThat(Objects.requireNonNull(getResponse.getBody()).getDomain()).isEqualTo(RepoDomain.FINANCE);
         assertThat(Objects.requireNonNull(getResponse.getBody()).getType()).isEqualTo(RepoType.MOBILE);
         assertThat(Objects.requireNonNull(getResponse.getBody()).getDescription()).isEqualTo("RepoDescription");
@@ -890,7 +886,7 @@ public class BackendTest {
         // Repo parameter setting
         repo.setRepoName("Repository Name3");
         repo.setSecurity(5);
-        repo.setAvailability(3);
+        repo.setPrivacy(3);
         repo.setDomain(RepoDomain.FINANCE);
         repo.setType(RepoType.MOBILE);
         repo.setDescription("RepoDescription");
@@ -1005,7 +1001,7 @@ public class BackendTest {
                 .domain(RepoDomain.FINANCE)
                 .userData(true)
                 .security(0)
-                .availability(0)
+                .privacy(0)
                 .fullName(fullName)
                 .repoName("test")
                 .url("test")
@@ -1015,6 +1011,7 @@ public class BackendTest {
                 .branchesUrl("test")
                 .cloneUrl("test")
                 .defaultBranch("master")
+                .language(Language.PYTHON)
                 .build();
 
         return repo;

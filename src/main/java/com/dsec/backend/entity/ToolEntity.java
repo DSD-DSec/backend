@@ -25,7 +25,7 @@ public class ToolEntity extends RepresentationModel<ToolEntity> {
     private Integer id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private Tool toolName;
 
     @Column(nullable = false)
