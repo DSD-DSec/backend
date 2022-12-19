@@ -52,4 +52,18 @@ public class ToolServiceImpl implements  ToolService{
 
         return suggestion;
     }
+
+    @Override
+    public void importData() {
+        // Tool repository is cleaned
+        toolRepository.deleteAll();
+
+        // Tools are added to Tool Entity table
+        toolRepository.save(new ToolEntity(Tool.GITLEAKS, 5, 4, 5, Language.NONE));
+        toolRepository.save(new ToolEntity(Tool.BANDIT, 1, 5, 2, Language.PYTHON));
+        toolRepository.save(new ToolEntity(Tool.FLAWFINDER, 1, 5, 2, Language.C_CPP));
+        toolRepository.save(new ToolEntity(Tool.GOKART, 1, 5, 2, Language.GO));
+        toolRepository.save(new ToolEntity(Tool.PROGPILOT, 1, 5, 2, Language.PHP));
+
+    }
 }

@@ -42,4 +42,11 @@ public class ToolEntity extends RepresentationModel<ToolEntity> {
     private Language language;
 
 
+    public ToolEntity(Tool toolName, Integer userData, Integer security, Integer privacy, Language language) {
+        this.toolName = toolName;
+        this.userData = userData;
+        this.security = security;
+        this.privacy = privacy;
+        this.language = language;
+    }
 }

@@ -2,6 +2,9 @@ package com.dsec.backend;
 
 import java.util.concurrent.Executor;
 
+import com.dsec.backend.service.tool.ToolService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +15,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @EnableAsync
 @SpringBootApplication
 @EnableHypermediaSupport(type = EnableHypermediaSupport.HypermediaType.HAL_FORMS)
-public class BackendApplication {
+public class BackendApplication implements CommandLineRunner {
+
+	@Autowired
+	private ToolService toolService;
 
 	public static void main(String[] args) {
 		SpringApplication.run(BackendApplication.class, args);
@@ -29,4 +35,9 @@ public class BackendApplication {
 	  return executor;
 	}
 
+
+	@Override
+	public void run(String... args) {
+		toolService.importData();
+	}
 }

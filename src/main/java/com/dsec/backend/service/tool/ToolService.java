@@ -15,4 +15,6 @@ public interface ToolService {
     ToolEntity getTool(int id);
 
     ArrayList<Integer> priorityMatrix(RepoType type, RepoDomain domain, Integer security, Integer privacy, Boolean userData, Language language);
+
+    void importData();
 }
