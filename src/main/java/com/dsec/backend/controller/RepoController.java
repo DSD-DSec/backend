@@ -4,6 +4,9 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import com.dsec.backend.entity.ToolEntity;
+import com.dsec.backend.model.tools.RepoToolUpdateDTO;
+import com.dsec.backend.service.tool.ToolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,6 +37,8 @@ public class RepoController {
     private final RepoService repoService;
 
     private final JobService jobService;
+
+    private final ToolService toolService;
 
     private final RepoAssembler repoAssembler;
 
@@ -91,6 +96,19 @@ public class RepoController {
     @GetMapping("/{repoId}/jobs")
     public ResponseEntity<List<Job>> getJobs(@PathVariable("repoId") long id, @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(jobService.getJobsByRepoID(id, jwt));
+    }
+
+    @GetMapping("/{repoId}/tools")
+    public ResponseEntity<List<ToolEntity>> getTools(@PathVariable("repoId") long id) {
+        return ResponseEntity.ok(toolService.getToolsByRepo(id));
+    }
+
+    @PutMapping("/{repoId}/tools")
+    public ResponseEntity<List<ToolEntity>> updateTools(@PathVariable("repoId") long id,@AuthenticationPrincipal Jwt jwt, @RequestBody @Valid RepoToolUpdateDTO repoToolUpdateDTO) {
+
+        repoService.updateRepoTools(id, repoToolUpdateDTO, jwt);
+
+        return ResponseEntity.ok(toolService.getToolsByRepo(id));
     }
 
 

@@ -8,6 +8,8 @@ public interface ToolService {
 
     List<ToolEntity> getTools();
 
+    List<ToolEntity> getToolsByRepo(long id);
+
     ToolEntity getToolByID(int id);
 
     ToolEntity getToolByName(Tool tool);

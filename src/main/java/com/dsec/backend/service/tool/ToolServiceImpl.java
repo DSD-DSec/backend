@@ -2,6 +2,7 @@ package com.dsec.backend.service.tool;
 
 import com.dsec.backend.entity.*;
 import com.dsec.backend.exception.EntityMissingException;
+import com.dsec.backend.repository.RepoRepository;
 import com.dsec.backend.repository.ToolRepoRepository;
 import com.dsec.backend.repository.ToolRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -18,6 +21,8 @@ public class ToolServiceImpl implements  ToolService{
     private final ToolRepository toolRepository;
 
     private final ToolRepoRepository toolRepoRepository;
+
+    private final RepoRepository repoRepository;
 
     @Override
     public List<ToolEntity> getTools() {
@@ -81,5 +86,18 @@ public class ToolServiceImpl implements  ToolService{
             toolRepository.save(new ToolEntity(Tool.PROGPILOT, 1, 5, 2, Language.PHP));
         }
 
+    }
+
+    @Override
+    public List<ToolEntity> getToolsByRepo(long id) {
+        Optional<Repo> repo = repoRepository.findById(id);
+
+        if(repo.isEmpty())
+            throw new EntityMissingException(Repo.class, id);
+
+        List<ToolEntity> toolEntities = new LinkedList<>();
+        for(ToolRepo toolRepo : toolRepoRepository.getToolRepoByRepo(repo.get()))
+            toolEntities.add(toolRepo.getTool());
+        return toolEntities;
     }
 }
