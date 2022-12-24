@@ -2,27 +2,27 @@ package com.dsec.backend.service.webhook;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.dsec.backend.service.async.AsyncService;
-import com.dsec.backend.service.repo.RepoService;
-import com.dsec.backend.service.user.UserService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.dsec.backend.config.ConfigProperties;
 import com.dsec.backend.entity.Job;
 import com.dsec.backend.entity.Repo;
+import com.dsec.backend.entity.Tool;
 import com.dsec.backend.entity.UserEntity;
-import com.dsec.backend.model.tools.GitleaksDTO;
 import com.dsec.backend.model.github.WebhookDTO;
+import com.dsec.backend.model.tools.GitleaksDTO;
 import com.dsec.backend.repository.JobRepository;
+import com.dsec.backend.service.async.AsyncService;
+import com.dsec.backend.service.repo.RepoService;
+import com.dsec.backend.service.user.UserService;
 import com.dsec.backend.util.attrconverter.LocalDateTimeAttributeConverter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,15 +45,15 @@ public class WebHookServiceImpl implements WebHookService {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
-    private final String toolUrl;
+    private final ConfigProperties configProperties;
 
     public WebHookServiceImpl(AsyncService asyncService, RepoService repoService, UserService userService,
-            JobRepository jobRepository, @Value("${tool.url}") String toolUrl, ObjectMapper objectMapper) {
+            JobRepository jobRepository, ConfigProperties configProperties, ObjectMapper objectMapper) {
         this.asyncService = asyncService;
         this.repoService = repoService;
         this.userService = userService;
         this.jobRepository = jobRepository;
-        this.toolUrl = toolUrl;
+        this.configProperties = configProperties;
         this.objectMapper = objectMapper;
 
         HttpClient httpClient = HttpClient.create()
@@ -63,9 +63,8 @@ public class WebHookServiceImpl implements WebHookService {
                 .doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(30000, TimeUnit.MILLISECONDS))
                         .addHandlerLast(new WriteTimeoutHandler(30000, TimeUnit.MILLISECONDS)));
 
-        this.webClient = WebClient.builder().baseUrl(toolUrl)
+        this.webClient = WebClient.builder()
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.ALL_VALUE)
-                .defaultUriVariables(Collections.singletonMap("url", toolUrl))
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
@@ -74,9 +73,7 @@ public class WebHookServiceImpl implements WebHookService {
     public void webhook(WebhookDTO dto) {
         asyncService.runCommands(() -> {
 
-            log.info("Tool url {}", toolUrl);
-
-            Repo repo = repoService.fetchByGithubId(dto.getRepoDto().getId());
+     Repo repo = repoService.fetchByGithubId(dto.getRepoDto().getId());
 
             Job job = Job.builder().startTime(LocalDateTimeAttributeConverter.now()).repo(repo).build();
 
@@ -92,7 +89,7 @@ public class WebHookServiceImpl implements WebHookService {
 
             String result = null;
             try {
-                result = webClient.post().uri("/gitleaks")
+                result = webClient.post().uri(configProperties.getTools().get(Tool.GITLEAKS))
                         .body(Mono.just(map), Map.class)
                         .retrieve()
                         .bodyToMono(String.class)

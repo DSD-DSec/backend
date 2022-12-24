@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import javax.servlet.http.Cookie;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -18,33 +18,25 @@ import org.springframework.security.oauth2.server.resource.web.access.BearerToke
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.dsec.backend.config.ConfigProperties;
 import com.dsec.backend.security.oauth.CustomOAuth2UserService;
 import com.dsec.backend.security.oauth.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.dsec.backend.security.oauth.OAuth2AuthenticationSuccessHandler;
 import com.dsec.backend.util.cookie.CookieUtil;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Configuration
 @Profile("prod")
 public class SecurityFilterChainConfigurerProd {
-    private final String cookieName;
 
+    private final ConfigProperties configProperties;
     private final UserDetailsService myUserDetailsService;
     private final CookieUtil cookieUtil;
     private final CustomOAuth2UserService userService;
     private final OAuth2AuthenticationSuccessHandler successHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository;
-
-    public SecurityFilterChainConfigurerProd(@Value("${jwt.cookie.name}") String cookieName,
-            UserDetailsService myUserDetailsService, CookieUtil cookieUtil, CustomOAuth2UserService userService,
-            OAuth2AuthenticationSuccessHandler successHandler,
-            HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository) {
-        this.cookieName = cookieName;
-        this.myUserDetailsService = myUserDetailsService;
-        this.cookieUtil = cookieUtil;
-        this.userService = userService;
-        this.successHandler = successHandler;
-        this.authorizationRequestRepository = authorizationRequestRepository;
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -101,7 +93,7 @@ public class SecurityFilterChainConfigurerProd {
 
     private BearerTokenResolver getTokenResolver() {
         return (request) -> {
-            Optional<Cookie> cookie = cookieUtil.getCookie(request, cookieName);
+            Optional<Cookie> cookie = cookieUtil.getCookie(request, configProperties.getJwt().getCookieName());
 
             return cookie.map(Cookie::getValue).orElse(null);
 
