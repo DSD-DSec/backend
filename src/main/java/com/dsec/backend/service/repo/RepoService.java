@@ -1,11 +1,13 @@
 package com.dsec.backend.service.repo;
 
+import com.dsec.backend.model.tools.RepoToolUpdateDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import com.dsec.backend.entity.Repo;
 import com.dsec.backend.model.repo.CreateRepoDTO;
+
 
 public interface RepoService {
 
@@ -25,4 +27,5 @@ public interface RepoService {
 
     Repo fetchByGithubId(long githubId);
 
+    void updateRepoTools(long id, RepoToolUpdateDTO repoToolUpdateDTO, Jwt jwt);
 }

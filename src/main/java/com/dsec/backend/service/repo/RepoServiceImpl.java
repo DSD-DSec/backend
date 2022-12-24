@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import com.dsec.backend.entity.*;
+import com.dsec.backend.model.tools.RepoToolUpdateDTO;
 import com.dsec.backend.repository.ToolRepoRepository;
 import com.dsec.backend.service.github.GithubClientService;
 import com.dsec.backend.service.tool.ToolService;
@@ -17,9 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import com.dsec.backend.entity.Repo;
-import com.dsec.backend.entity.UserEntity;
-import com.dsec.backend.entity.UserRepo;
 import com.dsec.backend.exception.EntityAlreadyExistsException;
 import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.exception.ForbidenAccessException;
@@ -41,6 +40,7 @@ public class RepoServiceImpl implements RepoService {
     private final GithubClientService githubClientService;
     private final UserRepoRepository userRepoRepository;
     private final ToolService toolService;
+
     private final ToolRepoRepository toolRepoRepository;
 
     @Override
@@ -121,6 +121,30 @@ public class RepoServiceImpl implements RepoService {
         repo.setPrivacy(createRepoDTO.getPrivacy());
 
         return repoRepository.save(repo);
+    }
+
+    @Override
+    public void updateRepoTools(long id, RepoToolUpdateDTO repoToolUpdateDTO, Jwt jwt)
+    {
+        UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
+
+        Optional<Repo> repo = repoRepository.findById(id);
+
+        if(repo.isEmpty())
+            throw new EntityMissingException(Repo.class, id);
+
+        if (!isOwner(repo.get(), userJwt))
+            throw new ForbidenAccessException("Invalid repo update.");
+
+        toolRepoRepository.deleteToolRepoByRepo(repo.get());
+        if(repoToolUpdateDTO.getTools() != null)
+        {
+            for(Integer toolID : repoToolUpdateDTO.getTools())
+            {
+                ToolEntity tool = toolService.getToolByID(toolID);
+                toolRepoRepository.save(new ToolRepo(null, repo.get(), tool));
+            }
+        }
     }
 
     @Override

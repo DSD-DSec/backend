@@ -2,14 +2,20 @@ package com.dsec.backend.service.tool;
 
 import com.dsec.backend.entity.*;
 import com.dsec.backend.exception.EntityMissingException;
+import com.dsec.backend.exception.ForbidenAccessException;
+import com.dsec.backend.repository.RepoRepository;
 import com.dsec.backend.repository.ToolRepoRepository;
 import com.dsec.backend.repository.ToolRepository;
+import com.dsec.backend.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -18,6 +24,8 @@ public class ToolServiceImpl implements  ToolService{
     private final ToolRepository toolRepository;
 
     private final ToolRepoRepository toolRepoRepository;
+
+    private final RepoRepository repoRepository;
 
     @Override
     public List<ToolEntity> getTools() {
@@ -81,5 +89,28 @@ public class ToolServiceImpl implements  ToolService{
             toolRepository.save(new ToolEntity(Tool.PROGPILOT, 1, 5, 2, Language.PHP));
         }
 
+    }
+
+    @Override
+    public List<ToolEntity> getToolsByRepo(long id, Jwt jwt) {
+        Optional<Repo> repo = repoRepository.findById(id);
+
+        if(repo.isEmpty())
+            throw new EntityMissingException(Repo.class, id);
+
+        UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
+
+        if (!isOwner(repo.get(), userJwt))
+            throw new ForbidenAccessException("Invalid repo get.");
+
+        List<ToolEntity> toolEntities = new LinkedList<>();
+        for(ToolRepo toolRepo : toolRepoRepository.getToolRepoByRepo(repo.get()))
+            toolEntities.add(toolRepo.getTool());
+        return toolEntities;
+    }
+
+    private boolean isOwner(Repo repo, UserEntity userJwt) {
+        return repo.getUserRepos().stream().filter(UserRepo::getIsOwner)
+                .allMatch(ur -> ur.getUser().getId().equals(userJwt.getId()));
     }
 }
