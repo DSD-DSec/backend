@@ -11,7 +11,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.dsec.backend.entity.*;
+import com.dsec.backend.repository.*;
 import org.assertj.core.util.Lists;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.DisplayName;
@@ -34,9 +36,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.ResourceAccessException;
 
 import com.dsec.backend.model.tools.GitleaksDTO;
-import com.dsec.backend.repository.JobRepository;
-import com.dsec.backend.repository.RepoRepository;
-import com.dsec.backend.repository.UserRepoRepository;
 import com.dsec.backend.service.user.UserService;
 import com.dsec.backend.util.attrconverter.LocalDateTimeAttributeConverter;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -72,6 +71,12 @@ public class BackendTest {
 
     @Autowired
     private UserRepoRepository userRepoRepository;
+
+    @Autowired
+    private ToolRepository toolRepository;
+
+    @Autowired
+    private ToolRepoRepository toolRepoRepository;
 
     @Test
     @DisplayName("GET /api/users returns unauthorized if the user is not logged in")
@@ -214,7 +219,7 @@ public class BackendTest {
         registerParameters.put("lastName", "Miller");
         registerParameters.put("email", "bob.miller@gmail.com");
         registerParameters.put("password", "Password90!");
-        // Password parameter does not respect contraints
+        // Password parameter does not respect constraints
         registerParameters.put("secondPassword", "pass!");
 
         HttpEntity<String> registerRequest = new HttpEntity<>(registerParameters.toString(), headers);
@@ -650,7 +655,7 @@ public class BackendTest {
         repo.setBranchesUrl("www.branches.com");
         repo.setCloneUrl("www.clone.com");
         repo.setHtmlUrl("www.html.com");
-        repo.setGithubId(2L);
+        repo.setGithubId(6L);
 
         // Repository is saved in database
         repo = repoRepository.save(repo);
@@ -722,7 +727,7 @@ public class BackendTest {
         repo.setBranchesUrl("www.branches.com");
         repo.setCloneUrl("www.clone.com");
         repo.setHtmlUrl("www.html.com");
-        repo.setGithubId(3L);
+        repo.setGithubId(5L);
 
         // Repository is saved in database
         repoRepository.save(repo);
@@ -994,8 +999,293 @@ public class BackendTest {
 
     }
 
+    @Test
+    @DisplayName("GET tool/ : returns unauthorized if the user is not logged in")
+    @Order(17)
+    void getToolsUnauthorized()
+    {
+        // GET tools
+        ResponseEntity<String> response = this.restTemplate.getForEntity("http://localhost:" + port + "/api/tool",
+                String.class);
+
+        // Expected Unauthorized since the user is not logged in
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @DisplayName("GET tool/ -> Get all the inserted tools")
+    @Order(18)
+    void getTools() throws Exception {
+
+        List<ToolEntity> tools = toolRepository.findAll();
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk("testd.testd@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        // GET tools
+        ResponseEntity<List<ToolEntity>> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/tool/", HttpMethod.GET,
+                new HttpEntity<>("", header), new ParameterizedTypeReference<>() {
+                });
+
+        // Check if the already present tools in the database are retrieved by the endpoint
+        Map<Integer, ToolEntity> toolEntityMap = Objects.requireNonNull(response.getBody()).stream()
+                .collect(Collectors.toMap(ToolEntity::getId, Function.identity()));
+
+        for (ToolEntity tool : tools) {
+            ToolEntity toolEntity = toolEntityMap.get(tool.getId());
+            assertThat(toolEntity).isNotNull();
+            assertThat(tool.getId()).isEqualTo(toolEntity.getId());
+            assertThat(tool.getToolName()).isEqualTo(toolEntity.getToolName());
+            assertThat(tool.getSecurity()).isEqualTo(toolEntity.getSecurity());
+            assertThat(tool.getPrivacy()).isEqualTo(toolEntity.getPrivacy());
+            assertThat(tool.getUserData()).isEqualTo(toolEntity.getUserData());
+            assertThat(tool.getLanguage()).isEqualTo(toolEntity.getLanguage());
+        }
+    }
+
+    @Test
+    @DisplayName("GET /api/repo/{repo}/tools returns not found if repo doesn't exist")
+    @Order(19)
+    void getToolsRepoNotExist() throws Exception {
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk("testd.testd@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        UserEntity user = userService.fetch(Objects.requireNonNull(loginResponse.getBody()).getId());
+
+        Repo repo = mockRepo("RepoTest1");
+
+        repo.setGithubId(2L);
+        repo = repoRepository.save(repo);
+
+        UserRepo userRepo = new UserRepo(null, user, repo, true);
+        userRepoRepository.save(userRepo);
+
+        // GET request to retrieve all jobs from the repo with id+1
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo.getId() + 1 + "/tools", HttpMethod.GET,
+                new HttpEntity<>("", header), String.class);
+
+        // Expected NOT FOUND since the repo with id+1 doesn't exist
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+    }
+
+    @Test
+    @DisplayName("GET /api/repo/{repo}/tools returns forbidden if user doesn't have access to repo")
+    @Order(20)
+    void getToolsRepoForbidden() throws Exception {
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk("testa.testa@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        UserEntity user = userService.fetch(Objects.requireNonNull(loginResponse.getBody()).getId());
+
+        Repo repo = mockRepo("RepoTest2");
+
+        repo.setGithubId(3L);
+        repo = repoRepository.save(repo);
+
+        UserRepo userRepo = new UserRepo(null, user, repo, true);
+        userRepoRepository.save(userRepo);
+
+        loginResponse = this.loginOk("testd.testd@gmail.com");
+
+        loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        header.clear();
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        // GET request to retrieve all tools from the repo of user "testa" without permissions
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo.getId() + "/tools", HttpMethod.GET,
+                new HttpEntity<>("", header), String.class);
+
+        // Expected FORBIDDEN since "testd" have not accessed to repo of user "testa"
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+    }
+
+    @Test
+    @DisplayName("GET /api/repo/{repo}/tools returns the correct list of tools")
+    @Order(21)
+    void getToolsRepo() throws Exception {
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk("testd.testd@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        UserEntity user = userService.fetch(Objects.requireNonNull(loginResponse.getBody()).getId());
+
+        Repo repo = mockRepo("RepoTest7");
+
+        repo.setGithubId(7L);
+        repo = repoRepository.save(repo);
+
+        UserRepo userRepo = new UserRepo(null, user, repo, true);
+        userRepoRepository.save(userRepo);
+
+        toolRepoRepository.save(new ToolRepo(null, repo, toolRepository.findByToolName(Tool.BANDIT)));
+
+        // GET request to retrieve all tools from the repo
+        ResponseEntity<List<ToolEntity>> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo.getId() + "/tools", HttpMethod.GET,
+                new HttpEntity<>("", header), new ParameterizedTypeReference<>() {
+                });
+
+        Map<Integer, ToolEntity> toolEntityMap = Objects.requireNonNull(response.getBody()).stream()
+                .collect(Collectors.toMap(ToolEntity::getId, Function.identity()));
+
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Check if the tool correspond to the one previously inserted
+        ToolEntity toolEntity = toolEntityMap.get(toolRepository.findByToolName(Tool.BANDIT).getId());
+        assertThat(toolEntity).isNotNull();
+        assertThat(toolRepository.findByToolName(Tool.BANDIT).getId()).isEqualTo(toolEntity.getId());
+
+    }
+
+
+    @Test
+    @DisplayName("PUT /api/repo/{repo}/tools returns not found if repo doesn't exist")
+    @Order(22)
+    void putToolsRepoNotExist() throws Exception {
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk("testd.testd@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        Repo repo = repoRepository.findByFullName("RepoTest7");
+        JSONObject updateParams = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.put(3);
+        updateParams.put("tools",jsonArray);
+
+
+        // PUT request to update an invalid repo id
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo.getId() + 1 + "/tools", HttpMethod.PUT,
+                new HttpEntity<>(updateParams.toString(), header), String.class);
+
+        // Expected NOT FOUND since the repo with id+1 doesn't exist
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+    }
+
+    @Test
+    @DisplayName("PUT /api/repo/{repo}/tools returns forbidden if user doesn't have access to repo")
+    @Order(23)
+    void putToolsRepoForbidden() throws Exception {
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk("testa.testa@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        Repo repo = repoRepository.findByFullName("RepoTest7");
+        JSONObject updateParams = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.put(3);
+        updateParams.put("tools",jsonArray);
+
+        // PUT request to update a forbidden repo
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo.getId() + "/tools", HttpMethod.PUT,
+                new HttpEntity<>(updateParams.toString(), header), String.class);
+
+        // Expected FORBIDDEN since "testa" doesn't have access to this repo
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+    }
+
+    @Test
+    @DisplayName("PUT /api/repo/{repo}/tools update the tools successfully")
+    @Order(23)
+    void putToolsRepo() throws Exception {
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<UserEntity> loginResponse = this.loginOk("testd.testd@gmail.com");
+
+        String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+        if (loginCookie != null)
+            header.add("Cookie", loginCookie);
+
+        Repo repo = repoRepository.findByFullName("RepoTest7");
+        JSONObject updateParams = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.put(3);
+        updateParams.put("tools",jsonArray);
+
+
+        // PUT request to update tools of my repo
+        ResponseEntity<List<ToolEntity>> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/api/repo/" + repo.getId() + "/tools", HttpMethod.PUT,
+                new HttpEntity<>(updateParams.toString(), header), new ParameterizedTypeReference<>() {
+                });
+
+
+        Map<Integer, ToolEntity> toolEntityMap = Objects.requireNonNull(response.getBody()).stream()
+                .collect(Collectors.toMap(ToolEntity::getId, Function.identity()));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Check if the tools has been added
+        ToolEntity toolEntity = toolEntityMap.get(toolRepository.findByToolName(Tool.FLAWFINDER).getId());
+        assertThat(toolEntity).isNotNull();
+        assertThat(toolRepository.findByToolName(Tool.FLAWFINDER).getId()).isEqualTo(toolEntity.getId());
+
+        // Check if the previous tool was removed
+        toolEntity = toolEntityMap.get(toolRepository.findByToolName(Tool.BANDIT).getId());
+        assertThat(toolEntity).isNull();
+    }
+
+
     private Repo mockRepo(String fullName) {
-        Repo repo = Repo.builder()
+        return Repo.builder()
                 .description("test")
                 .type(RepoType.WEBSITE)
                 .domain(RepoDomain.FINANCE)
@@ -1003,7 +1293,7 @@ public class BackendTest {
                 .security(0)
                 .privacy(0)
                 .fullName(fullName)
-                .repoName("test")
+                .repoName(fullName)
                 .url("test")
                 .htmlUrl("test")
                 .hooksUrl("test")
@@ -1014,7 +1304,8 @@ public class BackendTest {
                 .language(Language.PYTHON)
                 .build();
 
-        return repo;
     }
+
+
 
 }

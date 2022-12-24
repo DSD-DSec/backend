@@ -99,8 +99,8 @@ public class RepoController {
     }
 
     @GetMapping("/{repoId}/tools")
-    public ResponseEntity<List<ToolEntity>> getTools(@PathVariable("repoId") long id) {
-        return ResponseEntity.ok(toolService.getToolsByRepo(id));
+    public ResponseEntity<List<ToolEntity>> getTools(@PathVariable("repoId") long id,@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(toolService.getToolsByRepo(id, jwt));
     }
 
     @PutMapping("/{repoId}/tools")
@@ -108,7 +108,7 @@ public class RepoController {
 
         repoService.updateRepoTools(id, repoToolUpdateDTO, jwt);
 
-        return ResponseEntity.ok(toolService.getToolsByRepo(id));
+        return ResponseEntity.ok(toolService.getToolsByRepo(id, jwt));
     }
 
 

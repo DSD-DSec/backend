@@ -2,11 +2,14 @@ package com.dsec.backend.service.tool;
 
 import com.dsec.backend.entity.*;
 import com.dsec.backend.exception.EntityMissingException;
+import com.dsec.backend.exception.ForbidenAccessException;
 import com.dsec.backend.repository.RepoRepository;
 import com.dsec.backend.repository.ToolRepoRepository;
 import com.dsec.backend.repository.ToolRepository;
+import com.dsec.backend.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -89,15 +92,25 @@ public class ToolServiceImpl implements  ToolService{
     }
 
     @Override
-    public List<ToolEntity> getToolsByRepo(long id) {
+    public List<ToolEntity> getToolsByRepo(long id, Jwt jwt) {
         Optional<Repo> repo = repoRepository.findById(id);
 
         if(repo.isEmpty())
             throw new EntityMissingException(Repo.class, id);
 
+        UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
+
+        if (!isOwner(repo.get(), userJwt))
+            throw new ForbidenAccessException("Invalid repo get.");
+
         List<ToolEntity> toolEntities = new LinkedList<>();
         for(ToolRepo toolRepo : toolRepoRepository.getToolRepoByRepo(repo.get()))
             toolEntities.add(toolRepo.getTool());
         return toolEntities;
+    }
+
+    private boolean isOwner(Repo repo, UserEntity userJwt) {
+        return repo.getUserRepos().stream().filter(UserRepo::getIsOwner)
+                .allMatch(ur -> ur.getUser().getId().equals(userJwt.getId()));
     }
 }

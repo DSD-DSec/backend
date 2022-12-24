@@ -141,7 +141,7 @@ public class RepoServiceImpl implements RepoService {
         {
             for(Integer toolID : repoToolUpdateDTO.getTools())
             {
-                ToolEntity tool = toolService.getToolByID((int)toolID);
+                ToolEntity tool = toolService.getToolByID(toolID);
                 toolRepoRepository.save(new ToolRepo(null, repo.get(), tool));
             }
         }
