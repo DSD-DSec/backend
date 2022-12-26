@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import com.dsec.backend.config.ConfigProperties;
 import com.dsec.backend.entity.Repo;
 import com.dsec.backend.entity.Role;
 import com.dsec.backend.entity.UserEntity;
@@ -51,8 +51,7 @@ public class UserServiceImpl implements UserService {
 	private final EncryptionUtil encryptionUtil;
 	private final JwtUtil jwtUtil;
 
-	@Value("${encryption.key}")
-	private String encryptionKey;
+	private final ConfigProperties configProperties;
 
 	@Override
 	public UserEntity register(UserRegisterDTO userRegisterDTO) {
@@ -130,7 +129,7 @@ public class UserServiceImpl implements UserService {
 		UserEntity user = fetch(id);
 
 		try {
-			user.setToken(encryptionUtil.encrypt(token.getBytes(), encryptionKey));
+			user.setToken(encryptionUtil.encrypt(token.getBytes(), configProperties.getBackend().getEncryptionKey()));
 			userRepository.save(user);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -149,7 +148,7 @@ public class UserServiceImpl implements UserService {
 		user = fetch(user.getId());
 
 		try {
-			return encryptionUtil.decrypt(user.getToken(), encryptionKey);
+			return encryptionUtil.decrypt(user.getToken(), configProperties.getBackend().getEncryptionKey());
 		} catch (Exception e) {
 			throw new ForbidenAccessException(e);
 		}

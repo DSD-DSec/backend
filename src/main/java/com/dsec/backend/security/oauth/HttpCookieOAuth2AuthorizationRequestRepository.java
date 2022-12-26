@@ -49,7 +49,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             cookieUtil.addCookie(response, REDIRECT_URI_PARAM_COOKIE_NAME, redirectUriAfterLogin, cookieExpireSeconds);
         }
 
-        if(StringUtils.isNotBlank(idToken)){
+        if (StringUtils.isNotBlank(idToken)) {
             cookieUtil.addCookie(response, TOKEN_COOKIE_NAME, idToken, cookieExpireSeconds);
         }
     }

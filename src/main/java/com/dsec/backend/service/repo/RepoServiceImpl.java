@@ -1,17 +1,15 @@
 package com.dsec.backend.service.repo;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
-import com.dsec.backend.entity.*;
-import com.dsec.backend.model.tools.RepoToolUpdateDTO;
-import com.dsec.backend.repository.ToolRepoRepository;
-import com.dsec.backend.service.github.GithubClientService;
-import com.dsec.backend.service.tool.ToolService;
-import com.dsec.backend.service.user.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,15 +17,25 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import com.dsec.backend.entity.Repo;
+import com.dsec.backend.entity.ToolEntity;
+import com.dsec.backend.entity.ToolRepo;
+import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.entity.UserRepo;
 import com.dsec.backend.exception.EntityAlreadyExistsException;
 import com.dsec.backend.exception.EntityMissingException;
 import com.dsec.backend.exception.ForbidenAccessException;
 import com.dsec.backend.model.github.GetWebhookDTO;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.repo.CreateRepoDTO;
+import com.dsec.backend.model.tools.RepoToolUpdateDTO;
 import com.dsec.backend.repository.RepoRepository;
+import com.dsec.backend.repository.ToolRepoRepository;
 import com.dsec.backend.repository.UserRepoRepository;
 import com.dsec.backend.security.UserPrincipal;
+import com.dsec.backend.service.github.GithubClientService;
+import com.dsec.backend.service.tool.ToolService;
+import com.dsec.backend.service.user.UserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -101,7 +109,6 @@ public class RepoServiceImpl implements RepoService {
             githubClientService.deleteWebhook(hook, jwt);
         }
 
-
         return repo;
     }
 
@@ -124,27 +131,44 @@ public class RepoServiceImpl implements RepoService {
     }
 
     @Override
-    public void updateRepoTools(long id, RepoToolUpdateDTO repoToolUpdateDTO, Jwt jwt)
-    {
+    public List<ToolEntity> updateRepoTools(long id, RepoToolUpdateDTO repoToolUpdateDTO, Jwt jwt) {
         UserEntity userJwt = UserPrincipal.fromClaims(jwt.getClaims()).getUserEntity();
 
-        Optional<Repo> repo = repoRepository.findById(id);
+        Repo repo = fetch(id);
 
-        if(repo.isEmpty())
-            throw new EntityMissingException(Repo.class, id);
-
-        if (!isOwner(repo.get(), userJwt))
+        if (!isOwner(repo, userJwt))
             throw new ForbidenAccessException("Invalid repo update.");
 
-        toolRepoRepository.deleteToolRepoByRepo(repo.get());
-        if(repoToolUpdateDTO.getTools() != null)
-        {
-            for(Integer toolID : repoToolUpdateDTO.getTools())
-            {
-                ToolEntity tool = toolService.getToolByID(toolID);
-                toolRepoRepository.save(new ToolRepo(null, repo.get(), tool));
+        Set<ToolEntity> toBeContained = new HashSet<>();
+        for (Integer toolID : repoToolUpdateDTO.getTools()) {
+            toBeContained.add(toolService.getToolByID(toolID));
+        }
+
+        Set<ToolEntity> contained = new HashSet<>();
+
+        Iterator<ToolRepo> it = repo.getToolRepos().iterator();
+        while (it.hasNext()) {
+            ToolRepo tr = it.next();
+            if (!toBeContained.contains(tr.getTool())) {
+                toolRepoRepository.deleteById(tr.getId());
+                it.remove();
+            } else {
+                contained.add(tr.getTool());
             }
         }
+
+        final Repo cpy = repo;
+        toBeContained.forEach(t -> {
+            if (!contained.contains(t)) {
+                ToolRepo tr = new ToolRepo(null, cpy, t);
+                tr = toolRepoRepository.save(tr);
+                cpy.getToolRepos().add(tr);
+            }
+        });
+
+        repoRepository.save(repo);
+
+        return getToolsByRepo(id, jwt);
     }
 
     @Override
@@ -183,6 +207,13 @@ public class RepoServiceImpl implements RepoService {
     public void triggerHook(long id, Jwt jwt) {
         Repo repo = fetch(id);
         githubClientService.triggerHook(repo.getHookUrl(), jwt);
+    }
+
+    @Override
+    public List<ToolEntity> getToolsByRepo(long id, Jwt jwt) {
+        Repo repo = getById(id, jwt);
+
+        return repo.getToolRepos().stream().map(ToolRepo::getTool).collect(Collectors.toList());
     }
 
     private boolean isOwner(Repo repo, UserEntity userJwt) {

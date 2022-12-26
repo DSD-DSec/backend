@@ -9,8 +9,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
 
-import com.dsec.backend.service.user.UserService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,11 +18,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 
+import com.dsec.backend.config.ConfigProperties;
 import com.dsec.backend.model.github.CreateWebhook;
 import com.dsec.backend.model.github.GetWebhookDTO;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.github.UrlDTO;
 import com.dsec.backend.model.github.UserDTO;
+import com.dsec.backend.service.user.UserService;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -43,11 +43,9 @@ public class GithubClientServiceImpl implements GithubClientService {
 
     private final WebClient webClient;
     private final UserService userService;
+    private final ConfigProperties configProperties;
 
-    @Value("${backend.url}")
-    private String backendUrl;
-
-    public GithubClientServiceImpl(UserService userService) {
+    public GithubClientServiceImpl(UserService userService, ConfigProperties configProperties) {
 
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT)
@@ -62,6 +60,7 @@ public class GithubClientServiceImpl implements GithubClientService {
                 .build();
 
         this.userService = userService;
+        this.configProperties = configProperties;
     }
 
     @Override
@@ -88,7 +87,8 @@ public class GithubClientServiceImpl implements GithubClientService {
 
         CreateWebhook createWebhook = CreateWebhook.builder().name("web").active(true)
                 .events(List.of("push", "pull_request"))
-                .config(Map.of("url", backendUrl + "/api/github/webhook", "content_type", "json", "insecure_ssl", "0"))
+                .config(Map.of("url", configProperties.getBackend().getUrl() + "/api/github/webhook", "content_type",
+                        "json", "insecure_ssl", "0"))
                 .build();
 
         return webClient.post().uri("/repos/" + fullRepoName + "/hooks")
@@ -129,7 +129,7 @@ public class GithubClientServiceImpl implements GithubClientService {
         return list.stream().filter(h -> {
             String url = h.getConfig().get("url");
 
-            return url.matches(backendUrl + "/api/github/webhook");
+            return url.matches(configProperties.getBackend().getUrl() + "/api/github/webhook");
         }).findAny();
     }
 

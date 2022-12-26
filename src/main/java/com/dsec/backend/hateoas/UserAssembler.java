@@ -23,7 +23,6 @@ public class UserAssembler extends RepresentationModelAssemblerSupport<UserEntit
         @Override
         public UserEntity toModel(UserEntity entity) {
 
-
                 Link link = linkTo(methodOn(UserController.class).getById(entity.getId()))
                                 .withSelfRel().withType(HttpMethod.GET.name());
                 entity.add(link);
@@ -31,7 +30,7 @@ public class UserAssembler extends RepresentationModelAssemblerSupport<UserEntit
                 entity.add(Affordances
                                 .of(linkTo(methodOn(UserController.class).deleteUser(entity.getId(),
                                                 null)).withRel("delete")
-                                                                .withType(HttpMethod.DELETE.name()))
+                                                .withType(HttpMethod.DELETE.name()))
                                 .afford(HttpMethod.DELETE)
                                 .withOutput(UserEntity.class)
                                 .withName("delete").toLink());
@@ -39,7 +38,7 @@ public class UserAssembler extends RepresentationModelAssemblerSupport<UserEntit
                 entity.add(Affordances
                                 .of(linkTo(methodOn(UserController.class).updateUser(entity.getId(),
                                                 null, null)).withRel("update")
-                                                                .withType(HttpMethod.PUT.name()))
+                                                .withType(HttpMethod.PUT.name()))
                                 .afford(HttpMethod.PUT)
                                 .withInput(UserUpdateDTO.class)
                                 .withOutput(UserEntity.class)
@@ -56,6 +55,7 @@ public class UserAssembler extends RepresentationModelAssemblerSupport<UserEntit
 
                 return userRole.add(linkTo(
                                 methodOn(RoleController.class)
-                                                .getRole(userRole.getId())).withSelfRel());
+                                                .getRole(userRole.getId()))
+                                .withSelfRel());
         }
 }

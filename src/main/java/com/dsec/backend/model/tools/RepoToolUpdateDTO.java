@@ -1,18 +1,18 @@
 package com.dsec.backend.model.tools;
 
+import java.util.List;
+
+import javax.validation.constraints.NotNull;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
-
-import java.util.List;
 
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode()
 @NoArgsConstructor
 public class RepoToolUpdateDTO {
 
-    @Nullable
+    @NotNull
     private List<Integer> tools;
 }

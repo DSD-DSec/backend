@@ -10,8 +10,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.dsec.backend.entity.*;
-import com.dsec.backend.repository.*;
 import org.assertj.core.util.Lists;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,10 +33,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.ResourceAccessException;
 
+import com.dsec.backend.entity.Job;
+import com.dsec.backend.entity.Language;
+import com.dsec.backend.entity.Repo;
+import com.dsec.backend.entity.RepoDomain;
+import com.dsec.backend.entity.RepoType;
+import com.dsec.backend.entity.Tool;
+import com.dsec.backend.entity.ToolEntity;
+import com.dsec.backend.entity.ToolRepo;
+import com.dsec.backend.entity.UserEntity;
+import com.dsec.backend.entity.UserRepo;
+import com.dsec.backend.model.job.JobDTO;
 import com.dsec.backend.model.tools.GitleaksDTO;
+import com.dsec.backend.repository.JobRepository;
+import com.dsec.backend.repository.RepoRepository;
+import com.dsec.backend.repository.ToolRepoRepository;
+import com.dsec.backend.repository.ToolRepository;
+import com.dsec.backend.repository.UserRepoRepository;
 import com.dsec.backend.service.user.UserService;
 import com.dsec.backend.util.attrconverter.LocalDateTimeAttributeConverter;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -453,8 +469,11 @@ public class BackendTest {
         long jobID = 123;
         String repoFullName = "RepoTest";
 
-        Job job = Job.builder().id(jobID).startTime(LocalDateTimeAttributeConverter.now())
-                .repo(repoRepository.findByFullName(repoFullName)).build();
+        Repo repo = repoRepository.findByFullName(repoFullName);
+        ToolEntity tool = toolRepository.findByToolName(Tool.GITLEAKS);
+
+        Job job = Job.builder().id(jobID).startTime(LocalDateTimeAttributeConverter.now()).log(mockGitleaksLog)
+                .repo(repo).tool(tool).build();
 
         jobRepository.save(job);
 
@@ -470,7 +489,7 @@ public class BackendTest {
 
         // GET the job infos
         ResponseEntity<String> response = this.restTemplate.exchange(
-                "http://localhost:" + port + "/api/job/" + (jobID + 1), HttpMethod.GET, new HttpEntity<>("", header),
+                "http://localhost:" + port + "/api/job/" + 99999, HttpMethod.GET, new HttpEntity<>("", header),
                 String.class);
 
         // Expected NOT FOUND since the job with id+1 doesn't exist
@@ -491,11 +510,13 @@ public class BackendTest {
 
         for (int i = 0; i < 20; i++) {
 
-            Job jobEntity = Job.builder().log(List.of(GitleaksDTO.builder().author("Debug string" + i).build()))
-                    .startTime(LocalDateTimeAttributeConverter.now())
-                    .repo(repo).build();
+            ToolEntity tool = toolRepository.findByToolName(Tool.GITLEAKS);
 
-            jobRepository.save(jobEntity);
+            Job jobEntity = Job.builder().log(mockGitleaksLog)
+                    .startTime(LocalDateTimeAttributeConverter.now().plusSeconds(i))
+                    .repo(repo).tool(tool).build();
+
+            jobEntity = jobRepository.save(jobEntity);
             jobs.add(jobEntity);
         }
 
@@ -507,23 +528,25 @@ public class BackendTest {
         String loginCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
 
         if (loginCookie != null)
-            header.add("Cookie", loginCookie);
+            header.add("Cookie", loginCookie);/*  */
 
         // GET jobs of repo
-        ResponseEntity<List<Job>> response = this.restTemplate.exchange(
+        ResponseEntity<List<JobDTO<?>>> response = this.restTemplate.exchange(
                 "http://localhost:" + port + "/api/repo/" + (repo.getId()) + "/jobs", HttpMethod.GET,
                 new HttpEntity<>("", header), new ParameterizedTypeReference<>() {
                 });
 
-        // Check if the inserted jobs are present in the repo
-        Map<Long, Job> jobListMap = Objects.requireNonNull(response.getBody()).stream()
-                .collect(Collectors.toMap(Job::getId, Function.identity()));
+        log.info("Response = {}", response);
+
+        // if the inserted jobs are present in the repo
+        Map<Long, JobDTO<?>> jobListMap = Objects.requireNonNull(response.getBody()).stream()
+                .collect(Collectors.toMap(JobDTO::getId, Function.identity()));
 
         for (Job job : jobs) {
-            Job jobEntity = jobListMap.get(job.getId());
+            JobDTO<?> jobEntity = jobListMap.get(job.getId());
             assertThat(jobEntity).isNotNull();
             assertThat(job.getId()).isEqualTo(jobEntity.getId());
-            assertThat(job.getLog().get(0).getAuthor()).isEqualTo(jobEntity.getLog().get(0).getAuthor());
+            assertThat(job.getStartTime().getSecond()).isEqualTo(jobEntity.getStartTime().getSecond());
         }
     }
 
@@ -536,9 +559,11 @@ public class BackendTest {
         String repoFullName = "RepoTest";
         Repo repo = repoRepository.findByFullName(repoFullName);
 
-        Job jobEntity = Job.builder().log(List.of(GitleaksDTO.builder().author("Output string test").build()))
+        ToolEntity tool = toolRepository.findByToolName(Tool.GITLEAKS);
+
+        Job jobEntity = Job.builder().log(mockGitleaksLog)
                 .startTime(LocalDateTimeAttributeConverter.now())
-                .repo(repo).build();
+                .repo(repo).tool(tool).build();
 
         jobRepository.save(jobEntity);
 
@@ -553,16 +578,17 @@ public class BackendTest {
             header.add("Cookie", loginCookie);
 
         // GET request to retrieve job info
-        ResponseEntity<Job> response = this.restTemplate.exchange(
+        ResponseEntity<JobDTO<?>> response = this.restTemplate.exchange(
                 "http://localhost:" + port + "/api/job/" + (jobEntity.getId()), HttpMethod.GET,
-                new HttpEntity<>("", header), Job.class);
+                new HttpEntity<>("", header), new ParameterizedTypeReference<>() {
+                });
 
-        Job job = response.getBody();
+        JobDTO<?> job = response.getBody();
         // Check if the inserted job infos are equal to the one obtained with the
         // endpoint
         assert job != null;
         assertThat(job.getId()).isEqualTo(jobEntity.getId());
-        assertThat(job.getLog().get(0).getAuthor()).isEqualTo(jobEntity.getLog().get(0).getAuthor());
+        assertThat(job.getStartTime().getSecond()).isEqualTo(jobEntity.getStartTime().getSecond());
     }
 
     @Test
@@ -1002,8 +1028,7 @@ public class BackendTest {
     @Test
     @DisplayName("GET tool/ : returns unauthorized if the user is not logged in")
     @Order(17)
-    void getToolsUnauthorized()
-    {
+    void getToolsUnauthorized() {
         // GET tools
         ResponseEntity<String> response = this.restTemplate.getForEntity("http://localhost:" + port + "/api/tool",
                 String.class);
@@ -1035,7 +1060,8 @@ public class BackendTest {
                 new HttpEntity<>("", header), new ParameterizedTypeReference<>() {
                 });
 
-        // Check if the already present tools in the database are retrieved by the endpoint
+        // Check if the already present tools in the database are retrieved by the
+        // endpoint
         Map<Integer, ToolEntity> toolEntityMap = Objects.requireNonNull(response.getBody()).stream()
                 .collect(Collectors.toMap(ToolEntity::getId, Function.identity()));
 
@@ -1119,7 +1145,8 @@ public class BackendTest {
         if (loginCookie != null)
             header.add("Cookie", loginCookie);
 
-        // GET request to retrieve all tools from the repo of user "testa" without permissions
+        // GET request to retrieve all tools from the repo of user "testa" without
+        // permissions
         ResponseEntity<String> response = this.restTemplate.exchange(
                 "http://localhost:" + port + "/api/repo/" + repo.getId() + "/tools", HttpMethod.GET,
                 new HttpEntity<>("", header), String.class);
@@ -1165,7 +1192,6 @@ public class BackendTest {
         Map<Integer, ToolEntity> toolEntityMap = Objects.requireNonNull(response.getBody()).stream()
                 .collect(Collectors.toMap(ToolEntity::getId, Function.identity()));
 
-
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         // Check if the tool correspond to the one previously inserted
@@ -1174,7 +1200,6 @@ public class BackendTest {
         assertThat(toolRepository.findByToolName(Tool.BANDIT).getId()).isEqualTo(toolEntity.getId());
 
     }
-
 
     @Test
     @DisplayName("PUT /api/repo/{repo}/tools returns not found if repo doesn't exist")
@@ -1195,8 +1220,7 @@ public class BackendTest {
         JSONObject updateParams = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         jsonArray.put(3);
-        updateParams.put("tools",jsonArray);
-
+        updateParams.put("tools", jsonArray);
 
         // PUT request to update an invalid repo id
         ResponseEntity<String> response = this.restTemplate.exchange(
@@ -1227,7 +1251,7 @@ public class BackendTest {
         JSONObject updateParams = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         jsonArray.put(3);
-        updateParams.put("tools",jsonArray);
+        updateParams.put("tools", jsonArray);
 
         // PUT request to update a forbidden repo
         ResponseEntity<String> response = this.restTemplate.exchange(
@@ -1258,15 +1282,13 @@ public class BackendTest {
         JSONObject updateParams = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         jsonArray.put(3);
-        updateParams.put("tools",jsonArray);
-
+        updateParams.put("tools", jsonArray);
 
         // PUT request to update tools of my repo
         ResponseEntity<List<ToolEntity>> response = this.restTemplate.exchange(
                 "http://localhost:" + port + "/api/repo/" + repo.getId() + "/tools", HttpMethod.PUT,
                 new HttpEntity<>(updateParams.toString(), header), new ParameterizedTypeReference<>() {
                 });
-
 
         Map<Integer, ToolEntity> toolEntityMap = Objects.requireNonNull(response.getBody()).stream()
                 .collect(Collectors.toMap(ToolEntity::getId, Function.identity()));
@@ -1283,15 +1305,14 @@ public class BackendTest {
         assertThat(toolEntity).isNull();
     }
 
-
     private Repo mockRepo(String fullName) {
         return Repo.builder()
                 .description("test")
                 .type(RepoType.WEBSITE)
                 .domain(RepoDomain.FINANCE)
                 .userData(true)
-                .security(0)
-                .privacy(0)
+                .security(5)
+                .privacy(5)
                 .fullName(fullName)
                 .repoName(fullName)
                 .url("test")
@@ -1306,6 +1327,23 @@ public class BackendTest {
 
     }
 
+    private static final String mockGitleaksLog = "{\"results\":[{\"commit\":\"\",\"author\":\"\",\"date\":\"\",\"description\":\"GenericAPIKey\",\"email\":\"\",\"endColumn\":1,\"endLine\":10,\"entropy\":3.8452778,\"file\":\"20:21:58.103959/src/main/resources/application-dev.properties\",\"fingerprint\":\"20:21:58.103959/src/main/resources/application-dev.properties:generic-api-key:9\",\"match\":\"password=fe977d092face0a96b415c392a7a1b8b168d9420e5c4c998eb92e493919a4637\",\"message\":\"\",\"ruleID\":\"generic-api-key\",\"secret\":\"fe977d092face0a96b415c392a7a1b8b168d9420e5c4c998eb92e493919a4637\",\"startColumn\":21,\"startLine\":\"9\",\"symlinkFile\":\"\"},{\"commit\":\"\",\"author\":\"\",\"date\":\"\",\"description\":\"GenericAPIKey\",\"email\":\"\",\"endColumn\":1,\"endLine\":13,\"entropy\":4.6875,\"file\":\"20:21:58.103959/src/main/resources/application.properties\",\"fingerprint\":\"20:21:58.103959/src/main/resources/application.properties:generic-api-key:12\",\"match\":\"secret.key=7Ogkwuk9qibXGfQlWgAmvhsHWTPEmMw6\",\"message\":\"\",\"ruleID\":\"generic-api-key\",\"secret\":\"7Ogkwuk9qibXGfQlWgAmvhsHWTPEmMw6\",\"startColumn\":2,\"startLine\":\"12\",\"symlinkFile\":\"\"},{\"commit\":\"\",\"author\":\"\",\"date\":\"\",\"description\":\"GenericAPIKey\",\"email\":\"\",\"endColumn\":72,\"endLine\":2,\"entropy\":4.458103,\"file\":\"20:21:58.103959/src/main/webapp/.env.development\",\"fingerprint\":\"20:21:58.103959/src/main/webapp/.env.development:generic-api-key:2\",\"match\":\"API_KEY=\\\"AIzaSyBb4TypFGBbzhOdFA6-I7SbasuJdzJI-Dg\\\"\",\"message\":\"\",\"ruleID\":\"generic-api-key\",\"secret\":\"AIzaSyBb4TypFGBbzhOdFA6-I7SbasuJdzJI-Dg\",\"startColumn\":24,\"startLine\":\"2\",\"symlinkFile\":\"\"}]}";
 
+    private GitleaksDTO mockGitleaksDTO() {
+        try {
+            return objectMapper.readValue(
+                    mockGitleaksLog,
+                    GitleaksDTO.class);
+
+        } catch (JsonMappingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
 }

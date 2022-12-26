@@ -56,9 +56,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         if (cookie.isPresent()) {
             Long id = jwtUtil.getUserIdFromOAuthToken(cookie.get().getValue());
 
-            if(id != null) {
+            if (id != null) {
                 userService.saveToken(id, token.getTokenValue());
-            }else {
+            } else {
                 clearAuthenticationAttributes(request, response);
 
                 throw new ForbidenAccessException("Invalid oauth token");

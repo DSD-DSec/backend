@@ -59,7 +59,7 @@ public class UserEntity extends RepresentationModel<UserEntity> {
 
     @ManyToOne(optional = false)
     private UserRole userRole;
-    
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     @JsonIgnore
     @Builder.Default

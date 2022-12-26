@@ -7,7 +7,8 @@ import com.dsec.backend.model.user.UserRegisterDTO;
 public class MatchPasswordValidator implements ConstraintValidator<MatchPassword, Object> {
 
 	@Override
-	public void initialize(MatchPassword constraintAnnotation) {}
+	public void initialize(MatchPassword constraintAnnotation) {
+	}
 
 	@Override
 	public boolean isValid(Object obj, ConstraintValidatorContext constraintValidatorContext) {

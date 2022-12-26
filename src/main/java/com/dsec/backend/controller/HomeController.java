@@ -14,7 +14,7 @@ public class HomeController {
     private final EmptyAssembler emptyAssembler;
 
     @GetMapping("/")
-    public ResponseEntity<EmptyDTO> getHome(){
+    public ResponseEntity<EmptyDTO> getHome() {
         return ResponseEntity.ok(emptyAssembler.toModel(new EmptyDTO()));
     }
 

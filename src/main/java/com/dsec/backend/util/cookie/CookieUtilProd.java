@@ -7,41 +7,36 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 import org.springframework.util.SerializationUtils;
 
+import com.dsec.backend.config.ConfigProperties;
 import com.dsec.backend.security.UserPrincipal;
 import com.dsec.backend.util.JwtUtil;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Component
 @Profile("prod")
 public class CookieUtilProd implements CookieUtil {
 
     private final JwtUtil jwtUtil;
-    private final long jwtExpiry;
-    private final String cookieName;
-    private final String domain;
-
-    public CookieUtilProd(JwtUtil jwtUtil, @Value("${jwt.expiration}") long jwtExpiry,
-            @Value("${jwt.cookie.name}") String cookieName, @Value("${backend.url}") String backendUrl) {
-        this.jwtUtil = jwtUtil;
-        this.jwtExpiry = jwtExpiry;
-        this.cookieName = cookieName;
-        this.domain = backendUrl.split("://")[1];
-    }
+    private final ConfigProperties configProperties;
 
     @Override
     public void createJwtCookie(HttpServletResponse response, UserPrincipal userPrincipal) {
-        addCookie(response, cookieName, jwtUtil.getToken(userPrincipal, jwtExpiry), jwtExpiry);
+        long exp = configProperties.getJwt().getExpiration();
+        addCookie(response, configProperties.getJwt().getCookieName(), jwtUtil.getToken(userPrincipal, exp), exp);
     }
 
     @Override
     public void deleteJwtCookie(HttpServletRequest request, HttpServletResponse response) {
-        deleteCookie(request, response, cookieName);
+        deleteCookie(request, response, configProperties.getJwt().getCookieName());
     }
 
     @Override
@@ -63,7 +58,7 @@ public class CookieUtilProd implements CookieUtil {
     public void addCookie(HttpServletResponse response, String name, String value, long maxAge) {
         response.addHeader(HttpHeaders.SET_COOKIE,
                 ResponseCookie.from(name, value)
-                        .httpOnly(true).path("/api").domain(domain)
+                        .httpOnly(true).path("/api").domain(configProperties.getBackend().getUrl())
                         .maxAge(maxAge).secure(true).sameSite("None").build().toString());
     }
 
@@ -74,7 +69,8 @@ public class CookieUtilProd implements CookieUtil {
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals(name)) {
                     response.addHeader(HttpHeaders.SET_COOKIE,
-                            ResponseCookie.from(name, "").httpOnly(true).path("/api").domain(domain)
+                            ResponseCookie.from(name, "").httpOnly(true).path("/api")
+                                    .domain(configProperties.getBackend().getUrl())
                                     .maxAge(0).secure(true).sameSite("None").build().toString());
                 }
             }
