@@ -17,12 +17,14 @@ import com.dsec.backend.entity.Tool;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Configuration
 @ConfigurationProperties
 @Validated
 @Getter
 @Setter
+@ToString
 public class ConfigProperties {
     @NotNull
     @Valid
@@ -39,6 +41,7 @@ public class ConfigProperties {
 
     @Getter
     @Setter
+    @ToString
     public static class JwtProps {
         @NotNull
         private RSAPrivateKey privateKey;
@@ -52,6 +55,7 @@ public class ConfigProperties {
 
     @Getter
     @Setter
+    @ToString
     public static class CorsProps {
         @NotBlank
         private String allowOrigins;
@@ -59,6 +63,7 @@ public class ConfigProperties {
 
     @Getter
     @Setter
+    @ToString
     public static class BackendProps {
         @NotBlank
         @URL

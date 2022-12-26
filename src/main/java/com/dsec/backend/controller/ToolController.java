@@ -1,6 +1,5 @@
 package com.dsec.backend.controller;
 
-
 import com.dsec.backend.entity.ToolEntity;
 import com.dsec.backend.service.tool.ToolService;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class ToolController {
 
-
     private final ToolService toolService;
-
 
     @GetMapping("")
     public ResponseEntity<List<ToolEntity>> getTools() {

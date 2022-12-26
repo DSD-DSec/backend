@@ -68,7 +68,6 @@ public class ToolEntity extends RepresentationModel<ToolEntity> {
         return getClass().hashCode();
     }
 
-
     public ToolEntity(Tool toolName, Integer userData, Integer security, Integer privacy, Language language) {
         this.toolName = toolName;
         this.userData = userData;

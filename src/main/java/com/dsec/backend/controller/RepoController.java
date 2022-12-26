@@ -4,9 +4,6 @@ import java.util.List;
 
 import javax.validation.Valid;
 
-import com.dsec.backend.entity.ToolEntity;
-import com.dsec.backend.model.tools.RepoToolUpdateDTO;
-import com.dsec.backend.service.tool.ToolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,11 +17,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dsec.backend.entity.Job;
 import com.dsec.backend.entity.Repo;
+import com.dsec.backend.entity.ToolEntity;
 import com.dsec.backend.hateoas.RepoAssembler;
 import com.dsec.backend.model.EmptyDTO;
+import com.dsec.backend.model.job.JobDTO;
 import com.dsec.backend.model.repo.CreateRepoDTO;
+import com.dsec.backend.model.tools.RepoToolUpdateDTO;
 import com.dsec.backend.service.job.JobService;
 import com.dsec.backend.service.repo.RepoService;
 
@@ -35,11 +34,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class RepoController {
     private final RepoService repoService;
-
     private final JobService jobService;
-
-    private final ToolService toolService;
-
     private final RepoAssembler repoAssembler;
 
     @PostMapping("/trigger/{id}")
@@ -51,8 +46,8 @@ public class RepoController {
 
     @PostMapping("/{owner}/{repo}")
     public ResponseEntity<Repo> createRepo(@PathVariable("owner") String owner,
-    @PathVariable("repo") String repoName, @Valid @RequestBody CreateRepoDTO createRepoDTO,
-                                           @AuthenticationPrincipal Jwt jwt) {
+            @PathVariable("repo") String repoName, @Valid @RequestBody CreateRepoDTO createRepoDTO,
+            @AuthenticationPrincipal Jwt jwt) {
 
         Repo repo = repoService.createRepo(owner + "/" + repoName, createRepoDTO, jwt);
 
@@ -77,14 +72,13 @@ public class RepoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Repo> updateRepo(@PathVariable("id") long id, @AuthenticationPrincipal Jwt jwt,
-                                           @RequestBody @Valid CreateRepoDTO createRepoDTO) {
+            @RequestBody @Valid CreateRepoDTO createRepoDTO) {
         Repo repo = repoService.fetch(id);
 
         repoService.updateRepo(id, repo, createRepoDTO, jwt);
 
         return ResponseEntity.ok(repoAssembler.toModel(repo));
     }
-
 
     // Method used only for RepoAssembler and hateos
     public ResponseEntity<Repo> fetchRepo(Long id) {
@@ -94,22 +88,21 @@ public class RepoController {
     }
 
     @GetMapping("/{repoId}/jobs")
-    public ResponseEntity<List<Job>> getJobs(@PathVariable("repoId") long id, @AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<List<JobDTO<?>>> getJobs(@PathVariable("repoId") long id, @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(jobService.getJobsByRepoID(id, jwt));
     }
 
     @GetMapping("/{repoId}/tools")
-    public ResponseEntity<List<ToolEntity>> getTools(@PathVariable("repoId") long id,@AuthenticationPrincipal Jwt jwt) {
-        return ResponseEntity.ok(toolService.getToolsByRepo(id, jwt));
+    public ResponseEntity<List<ToolEntity>> getTools(@PathVariable("repoId") long id,
+            @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(repoService.getToolsByRepo(id, jwt));
     }
 
     @PutMapping("/{repoId}/tools")
-    public ResponseEntity<List<ToolEntity>> updateTools(@PathVariable("repoId") long id,@AuthenticationPrincipal Jwt jwt, @RequestBody @Valid RepoToolUpdateDTO repoToolUpdateDTO) {
+    public ResponseEntity<List<ToolEntity>> updateTools(@PathVariable("repoId") long id,
+            @AuthenticationPrincipal Jwt jwt, @RequestBody @Valid RepoToolUpdateDTO repoToolUpdateDTO) {
 
-        repoService.updateRepoTools(id, repoToolUpdateDTO, jwt);
-
-        return ResponseEntity.ok(toolService.getToolsByRepo(id, jwt));
+        return ResponseEntity.ok(repoService.updateRepoTools(id, repoToolUpdateDTO, jwt));
     }
-
 
 }

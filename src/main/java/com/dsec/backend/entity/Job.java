@@ -1,7 +1,6 @@
 package com.dsec.backend.entity;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 
 import javax.persistence.Column;
@@ -18,8 +17,6 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import com.dsec.backend.model.tools.GitleaksDTO;
-import com.dsec.backend.util.attrconverter.GitleaksListConverter;
 import com.dsec.backend.util.attrconverter.LocalDateTimeAttributeConverter;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -45,13 +42,17 @@ public class Job {
 
     @Lob
     @Column(nullable = true)
-    @Convert(converter = GitleaksListConverter.class)
-    private List<GitleaksDTO> log;
+    private String log;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "repo_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Repo repo;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "tool_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private ToolEntity tool;
 
     @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss:SSS")
@@ -65,11 +66,6 @@ public class Job {
 
     @Column(nullable = true)
     private Boolean compliant;
-
-    public Job(List<GitleaksDTO> log, Repo repo) {
-        this.log = log;
-        this.repo = repo;
-    }
 
     @Override
     public boolean equals(Object o) {

@@ -1,16 +1,19 @@
 package com.dsec.backend.service.job;
 
-import com.dsec.backend.entity.Job;
+import java.util.List;
+
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.util.List;
+import com.dsec.backend.entity.Job;
+import com.dsec.backend.model.job.JobDTO;
 
 public interface JobService {
 
-    List<Job> getJobsByRepoID(long repoID, Jwt jwt);
+    List<JobDTO<?>> getJobsByRepoID(long repoID, Jwt jwt);
 
-    List<Job> findAll();
+    List<JobDTO<?>> findAll();
 
     Job fetch(long jobID, Jwt jwt);
 
+    JobDTO<?> get(long jobID, Jwt jwt);
 }

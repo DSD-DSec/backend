@@ -22,7 +22,6 @@ public class ToolRepo {
     @JoinColumn(name = "repo_id", nullable = false)
     private Repo repo;
 
-
     @ManyToOne(optional = false)
     @JoinColumn(name = "tool_id", nullable = false)
     private ToolEntity tool;

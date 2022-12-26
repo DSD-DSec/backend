@@ -16,7 +16,7 @@ import lombok.NonNull;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
-public class UserRegisterDTO  {
+public class UserRegisterDTO {
 
     @NotEmpty(message = "Please enter an email")
     @Email(message = "Email is not valid")
@@ -24,8 +24,7 @@ public class UserRegisterDTO  {
     private @NonNull String email;
 
     @NotBlank(message = "Please enter your first name")
-    @Pattern(regexp = "^[\\p{L}]{1,32}$",
-            message = "Please use only letters in your first name")
+    @Pattern(regexp = "^[\\p{L}]{1,32}$", message = "Please use only letters in your first name")
     private @NonNull String firstName;
 
     @NotBlank(message = "Please enter your lastname")

@@ -33,8 +33,10 @@ public class UserRole extends RepresentationModel<UserRole> {
 
     @Override
     public boolean equals(@Nullable Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        if (this == o)
+            return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o))
+            return false;
         UserRole userRole = (UserRole) o;
         return id != null && Objects.equals(id, userRole.id);
     }

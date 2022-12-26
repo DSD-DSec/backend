@@ -1,26 +1,22 @@
 package com.dsec.backend.util.attrconverter;
 
 import java.io.IOException;
-import java.util.List;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import org.springframework.stereotype.Component;
 
-import com.dsec.backend.model.tools.GitleaksDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Converter
 @Slf4j
-public class GitleaksListConverter implements AttributeConverter<List<GitleaksDTO>, String> {
+@Component
+public class LogConverter {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Override
-    public String convertToDatabaseColumn(List<GitleaksDTO> logs) {
+    public <T> String convertToDatabaseColumn(T logs) {
 
         String customerInfoJson = null;
         try {
@@ -32,14 +28,25 @@ public class GitleaksListConverter implements AttributeConverter<List<GitleaksDT
         return customerInfoJson;
     }
 
-    @Override
-    public List<GitleaksDTO> convertToEntityAttribute(String logsJSON) {
+    public <T> T convertToEntityAttribute(String logsJSON, Class<T> valueType) {
 
-        List<GitleaksDTO> logs = null;
+        T logs = null;
         try {
             logs = objectMapper.readValue(logsJSON,
-                    new TypeReference<List<GitleaksDTO>>() {
-                    });
+                    valueType);
+        } catch (final IOException e) {
+            log.error("JSON reading error", e);
+        }
+
+        return logs;
+    }
+
+    public <T> T convertToEntityAttribute(String logsJSON, TypeReference<T> valueType) {
+
+        T logs = null;
+        try {
+            logs = objectMapper.readValue(logsJSON,
+                    valueType);
         } catch (final IOException e) {
             log.error("JSON reading error", e);
         }

@@ -1,18 +1,33 @@
 package com.dsec.backend.entity;
 
-import com.dsec.backend.exception.EntityMissingException;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+
 import org.hibernate.Hibernate;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
+import com.dsec.backend.exception.EntityMissingException;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @ToString
@@ -94,7 +109,8 @@ public class Repo extends RepresentationModel<Repo> {
     private Set<Job> jobs = new LinkedHashSet<>();
 
     @Builder.Default
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "repo", cascade = CascadeType.REMOVE)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "repo", cascade = { CascadeType.REFRESH,
+            CascadeType.MERGE })
     @JsonIgnore
     @ToString.Exclude
     private Set<ToolRepo> toolRepos = new LinkedHashSet<>();

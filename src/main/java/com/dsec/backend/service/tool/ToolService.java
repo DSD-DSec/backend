@@ -1,15 +1,14 @@
 package com.dsec.backend.service.tool;
 
-import com.dsec.backend.entity.*;
-import org.springframework.security.oauth2.jwt.Jwt;
-
 import java.util.List;
+
+import com.dsec.backend.entity.Repo;
+import com.dsec.backend.entity.Tool;
+import com.dsec.backend.entity.ToolEntity;
 
 public interface ToolService {
 
     List<ToolEntity> getTools();
-
-    List<ToolEntity> getToolsByRepo(long id, Jwt jwt);
 
     ToolEntity getToolByID(int id);
 
