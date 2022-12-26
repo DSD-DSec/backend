@@ -34,7 +34,7 @@ public class LogConverter {
         try {
             logs = objectMapper.readValue(logsJSON,
                     valueType);
-        } catch (final IOException e) {
+        } catch (final IOException | IllegalArgumentException e) {
             log.error("JSON reading error", e);
         }
 
@@ -47,7 +47,7 @@ public class LogConverter {
         try {
             logs = objectMapper.readValue(logsJSON,
                     valueType);
-        } catch (final IOException e) {
+        } catch (final IOException | IllegalArgumentException e) {
             log.error("JSON reading error", e);
         }
 
