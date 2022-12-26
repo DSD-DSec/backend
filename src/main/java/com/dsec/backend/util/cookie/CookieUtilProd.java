@@ -58,7 +58,7 @@ public class CookieUtilProd implements CookieUtil {
     public void addCookie(HttpServletResponse response, String name, String value, long maxAge) {
         response.addHeader(HttpHeaders.SET_COOKIE,
                 ResponseCookie.from(name, value)
-                        .httpOnly(true).path("/api").domain(configProperties.getBackend().getUrl())
+                        .httpOnly(true).path("/api").domain(configProperties.getBackend().getUrl().split("://")[1])
                         .maxAge(maxAge).secure(true).sameSite("None").build().toString());
     }
 
@@ -70,7 +70,7 @@ public class CookieUtilProd implements CookieUtil {
                 if (cookie.getName().equals(name)) {
                     response.addHeader(HttpHeaders.SET_COOKIE,
                             ResponseCookie.from(name, "").httpOnly(true).path("/api")
-                                    .domain(configProperties.getBackend().getUrl())
+                                    .domain(configProperties.getBackend().getUrl().split("://")[1])
                                     .maxAge(0).secure(true).sameSite("None").build().toString());
                 }
             }
