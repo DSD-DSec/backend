@@ -87,19 +87,19 @@ public class RepoController {
         return ResponseEntity.ok(repo);
     }
 
-    @GetMapping("/{repoId}/jobs")
-    public ResponseEntity<List<JobDTO<?>>> getJobs(@PathVariable("repoId") long id, @AuthenticationPrincipal Jwt jwt) {
+    @GetMapping("/{id}/jobs")
+    public ResponseEntity<List<JobDTO<?>>> getJobs(@PathVariable("id") long id, @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(jobService.getJobsByRepoID(id, jwt));
     }
 
-    @GetMapping("/{repoId}/tools")
-    public ResponseEntity<List<ToolEntity>> getTools(@PathVariable("repoId") long id,
+    @GetMapping("/{id}/tools")
+    public ResponseEntity<List<ToolEntity>> getTools(@PathVariable("id") long id,
             @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(repoService.getToolsByRepo(id, jwt));
     }
 
-    @PutMapping("/{repoId}/tools")
-    public ResponseEntity<List<ToolEntity>> updateTools(@PathVariable("repoId") long id,
+    @PutMapping("/{id}/tools")
+    public ResponseEntity<List<ToolEntity>> updateTools(@PathVariable("id") long id,
             @AuthenticationPrincipal Jwt jwt, @RequestBody @Valid RepoToolUpdateDTO repoToolUpdateDTO) {
 
         return ResponseEntity.ok(repoService.updateRepoTools(id, repoToolUpdateDTO, jwt));

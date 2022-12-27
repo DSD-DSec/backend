@@ -110,7 +110,7 @@ public class Repo extends RepresentationModel<Repo> {
 
     @Builder.Default
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "repo", cascade = { CascadeType.REFRESH,
-            CascadeType.MERGE })
+            CascadeType.MERGE, CascadeType.REMOVE })
     @JsonIgnore
     @ToString.Exclude
     private Set<ToolRepo> toolRepos = new LinkedHashSet<>();

@@ -1,6 +1,7 @@
 package com.dsec.backend.model.tools;
 
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -23,7 +24,7 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BanditDTO {
     private List<Error> errors;
-    private List<Metric> metrics;
+    private Map<String, Metric> metrics;
     private List<Result> results;
 
     @ToString

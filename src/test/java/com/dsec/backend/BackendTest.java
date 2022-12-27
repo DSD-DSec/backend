@@ -1336,10 +1336,8 @@ public class BackendTest {
                     GitleaksDTO.class);
 
         } catch (JsonMappingException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (JsonProcessingException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
