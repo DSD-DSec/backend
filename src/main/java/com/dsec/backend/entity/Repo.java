@@ -72,7 +72,7 @@ public class Repo extends RepresentationModel<Repo> {
     @Column(nullable = false, unique = true)
     private String fullName;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false/* , unique = true */)
     private String repoName;
 
     @Column(nullable = false)

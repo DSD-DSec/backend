@@ -5,7 +5,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -19,11 +21,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 
 import com.dsec.backend.config.ConfigProperties;
+import com.dsec.backend.entity.Repo;
 import com.dsec.backend.model.github.CreateWebhook;
 import com.dsec.backend.model.github.GetWebhookDTO;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.github.UrlDTO;
 import com.dsec.backend.model.github.UserDTO;
+import com.dsec.backend.repository.RepoRepository;
 import com.dsec.backend.service.user.UserService;
 
 import io.netty.channel.ChannelOption;
@@ -44,8 +48,10 @@ public class GithubClientServiceImpl implements GithubClientService {
     private final WebClient webClient;
     private final UserService userService;
     private final ConfigProperties configProperties;
+    private final RepoRepository repoRepository;
 
-    public GithubClientServiceImpl(UserService userService, ConfigProperties configProperties) {
+    public GithubClientServiceImpl(UserService userService, ConfigProperties configProperties,
+            RepoRepository repoRepository) {
 
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT)
@@ -61,13 +67,22 @@ public class GithubClientServiceImpl implements GithubClientService {
 
         this.userService = userService;
         this.configProperties = configProperties;
+        this.repoRepository = repoRepository;
     }
 
     @Override
-    public Mono<List<RepoDTO>> getRepos(Jwt jwt) {
-        return get("/user/repos", userService.getToken(jwt))
+    public List<RepoDTO> getRepos(Jwt jwt) {
+        List<RepoDTO> list = get("/user/repos", userService.getToken(jwt))
                 .bodyToMono(new ParameterizedTypeReference<List<RepoDTO>>() {
-                });
+                }).block();
+
+        List<Repo> repos = repoRepository.findAll();
+        Set<String> repoFullNames = repos.stream().map(Repo::getFullName).collect(Collectors.toSet());
+        Set<Long> githubIds = repos.stream().map(Repo::getGithubId).collect(Collectors.toSet());
+
+        return list.stream().filter(r -> (!githubIds.contains(r.getId()) && !repoFullNames.contains(r.getFullName())))
+                .toList();
+
     }
 
     @Override

@@ -15,7 +15,7 @@ public interface GithubClientService {
 
     Mono<UserDTO> getUser(Jwt jwt);
 
-    Mono<List<RepoDTO>> getRepos(Jwt jwt);
+    List<RepoDTO> getRepos(Jwt jwt);
 
     Mono<RepoDTO> getRepo(String fullRepoName, Jwt jwt);
 

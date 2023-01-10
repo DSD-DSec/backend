@@ -38,7 +38,7 @@ public class GithubController {
     }
 
     @GetMapping("/user/repos")
-    public Mono<List<RepoDTO>> getRepos(@AuthenticationPrincipal Jwt jwt) {
+    public List<RepoDTO> getRepos(@AuthenticationPrincipal Jwt jwt) {
         return githubClientService.getRepos(jwt);
     }
 
