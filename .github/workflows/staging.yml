@@ -1,0 +1,70 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Publish to Heroku staging
+
+on:
+  push:
+    branches: [ "staging" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  publish-to-heroku:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Test with Maven
+        run: ./mvnw test
+
+      - name: Overwrite properties
+        uses: "DamianReeves/write-file-action@master"
+        with:
+          path: src/main/resources/application-prod.properties
+          write-mode: overwrite
+          contents: |
+            ${{secrets.STAGING_APPLICATION_PROPERTIES}}
+
+      - name: Overwrite pub key
+        uses: "DamianReeves/write-file-action@master"
+        with:
+          path: src/main/resources/app.pub
+          write-mode: overwrite
+          contents: |
+            ${{secrets.STAGING_RSA_PUB}}
+      
+      - name: Overwrite priv key
+        uses: "DamianReeves/write-file-action@master"
+        with:
+          path: src/main/resources/app.key
+          write-mode: overwrite
+          contents: |
+            ${{secrets.STAGING_RSA_PRIV}}
+
+      - name: Login Heroku
+        uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "dsec-backend-staging" #Must be unique in Heroku
+          heroku_email: "jan.rocek@fer.hr"
+      
