@@ -1,15 +1,16 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.github;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,11 +20,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 
+import com.dsec.backend.config.ConfigProperties;
+import com.dsec.backend.entity.Repo;
 import com.dsec.backend.model.github.CreateWebhook;
 import com.dsec.backend.model.github.GetWebhookDTO;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.github.UrlDTO;
 import com.dsec.backend.model.github.UserDTO;
+import com.dsec.backend.repository.RepoRepository;
+import com.dsec.backend.service.user.UserService;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -42,11 +47,11 @@ public class GithubClientServiceImpl implements GithubClientService {
 
     private final WebClient webClient;
     private final UserService userService;
+    private final ConfigProperties configProperties;
+    private final RepoRepository repoRepository;
 
-    @Value("${backend.url}")
-    private String backendUrl;
-
-    public GithubClientServiceImpl(UserService userService) {
+    public GithubClientServiceImpl(UserService userService, ConfigProperties configProperties,
+            RepoRepository repoRepository) {
 
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT)
@@ -61,13 +66,23 @@ public class GithubClientServiceImpl implements GithubClientService {
                 .build();
 
         this.userService = userService;
+        this.configProperties = configProperties;
+        this.repoRepository = repoRepository;
     }
 
     @Override
-    public Mono<List<RepoDTO>> getRepos(Jwt jwt) {
-        return get("/user/repos", userService.getToken(jwt))
+    public List<RepoDTO> getRepos(Jwt jwt) {
+        List<RepoDTO> list = get("/user/repos", userService.getToken(jwt))
                 .bodyToMono(new ParameterizedTypeReference<List<RepoDTO>>() {
-                });
+                }).block();
+
+        List<Repo> repos = repoRepository.findAll();
+        Set<String> repoFullNames = repos.stream().map(Repo::getFullName).collect(Collectors.toSet());
+        Set<Long> githubIds = repos.stream().map(Repo::getGithubId).collect(Collectors.toSet());
+
+        return list.stream().filter(r -> (!githubIds.contains(r.getId()) && !repoFullNames.contains(r.getFullName())))
+                .toList();
+
     }
 
     @Override
@@ -87,7 +102,8 @@ public class GithubClientServiceImpl implements GithubClientService {
 
         CreateWebhook createWebhook = CreateWebhook.builder().name("web").active(true)
                 .events(List.of("push", "pull_request"))
-                .config(Map.of("url", backendUrl + "/api/github/webhook", "content_type", "json", "insecure_ssl", "0"))
+                .config(Map.of("url", configProperties.getBackend().getUrl() + "/api/github/webhook", "content_type",
+                        "json", "insecure_ssl", "0"))
                 .build();
 
         return webClient.post().uri("/repos/" + fullRepoName + "/hooks")
@@ -128,7 +144,7 @@ public class GithubClientServiceImpl implements GithubClientService {
         return list.stream().filter(h -> {
             String url = h.getConfig().get("url");
 
-            return url.matches(backendUrl + "/api/github/webhook");
+            return url.matches(configProperties.getBackend().getUrl() + "/api/github/webhook");
         }).findAny();
     }
 

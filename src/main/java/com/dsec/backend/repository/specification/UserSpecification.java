@@ -1,7 +1,8 @@
-package com.dsec.backend.specification;
+package com.dsec.backend.repository.specification;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+
 import com.dsec.backend.entity.UserEntity;
 
 @Component
@@ -16,7 +17,7 @@ public class UserSpecification {
     }
 
     private Specification<UserEntity> createGeneralSpecs(String str) {
-        Specification<UserEntity> spec = firstNameLike(null); // this one is always true;
+        Specification<UserEntity> spec = firstNameLike(null); // this one is always true
         if (str == null)
             return spec; // don't filter if null
 

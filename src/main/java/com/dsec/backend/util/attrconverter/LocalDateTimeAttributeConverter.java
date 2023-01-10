@@ -1,4 +1,4 @@
-package com.dsec.backend.util;
+package com.dsec.backend.util.attrconverter;
 
 import java.sql.Timestamp;
 import java.time.Instant;

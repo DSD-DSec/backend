@@ -31,8 +31,8 @@ import com.dsec.backend.entity.UserEntity;
 import com.dsec.backend.hateoas.UserAssembler;
 import com.dsec.backend.model.EmptyDTO;
 import com.dsec.backend.model.user.UserUpdateDTO;
-import com.dsec.backend.service.UserService;
-import com.dsec.backend.specification.UserSpecification;
+import com.dsec.backend.service.user.UserService;
+import com.dsec.backend.repository.specification.UserSpecification;
 import com.dsec.backend.util.cookie.CookieUtil;
 
 import lombok.RequiredArgsConstructor;

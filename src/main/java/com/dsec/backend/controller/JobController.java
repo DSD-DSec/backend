@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dsec.backend.entity.Job;
-import com.dsec.backend.service.JobService;
+import com.dsec.backend.model.job.JobDTO;
+import com.dsec.backend.service.job.JobService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,12 +24,12 @@ public class JobController {
     private final JobService jobService;
 
     @GetMapping("")
-    public ResponseEntity<List<Job>> getJobs() {
+    public ResponseEntity<List<JobDTO<?>>> getJobs() {
         return ResponseEntity.ok(jobService.findAll());
     }
 
     @GetMapping("/{job}")
-    public ResponseEntity<Job> getJobLog(@PathVariable("job") long jobID, @AuthenticationPrincipal Jwt jwt) {
-        return ResponseEntity.ok(jobService.fetch(jobID, jwt));
+    public ResponseEntity<JobDTO<?>> getJobLog(@PathVariable("job") long jobID, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(jobService.get(jobID, jwt));
     }
 }

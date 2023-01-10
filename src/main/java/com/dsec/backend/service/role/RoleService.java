@@ -1,4 +1,4 @@
-package com.dsec.backend.service;
+package com.dsec.backend.service.role;
 
 import java.util.List;
 import com.dsec.backend.entity.UserRole;

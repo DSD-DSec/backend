@@ -1,18 +1,33 @@
 package com.dsec.backend.entity;
 
-import com.dsec.backend.exception.EntityMissingException;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+
 import org.hibernate.Hibernate;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
+import com.dsec.backend.exception.EntityMissingException;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @ToString
@@ -48,13 +63,16 @@ public class Repo extends RepresentationModel<Repo> {
     private Integer security;
 
     @Column(nullable = false)
-    private Integer availability;
+    private Integer privacy;
+
+    @Column(nullable = false)
+    private Language language;
 
     // Full name of the GitHub repository, in the form username/repository_name
     @Column(nullable = false, unique = true)
     private String fullName;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false/* , unique = true */)
     private String repoName;
 
     @Column(nullable = false)
@@ -89,6 +107,13 @@ public class Repo extends RepresentationModel<Repo> {
     @JsonIgnore
     @ToString.Exclude
     private Set<Job> jobs = new LinkedHashSet<>();
+
+    @Builder.Default
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "repo", cascade = { CascadeType.REFRESH,
+            CascadeType.MERGE, CascadeType.REMOVE })
+    @JsonIgnore
+    @ToString.Exclude
+    private Set<ToolRepo> toolRepos = new LinkedHashSet<>();
 
     @Override
     public boolean equals(@Nullable Object o) {

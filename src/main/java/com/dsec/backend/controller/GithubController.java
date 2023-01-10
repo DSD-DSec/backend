@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dsec.backend.model.github.RepoDTO;
 import com.dsec.backend.model.github.UserDTO;
 import com.dsec.backend.model.github.WebhookDTO;
-import com.dsec.backend.service.GithubClientService;
-import com.dsec.backend.service.WebHookService;
+import com.dsec.backend.service.github.GithubClientService;
+import com.dsec.backend.service.webhook.WebHookService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,7 @@ public class GithubController {
     }
 
     @GetMapping("/user/repos")
-    public Mono<List<RepoDTO>> getRepos(@AuthenticationPrincipal Jwt jwt) {
+    public List<RepoDTO> getRepos(@AuthenticationPrincipal Jwt jwt) {
         return githubClientService.getRepos(jwt);
     }
 

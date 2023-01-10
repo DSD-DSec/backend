@@ -17,13 +17,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dsec.backend.entity.Job;
 import com.dsec.backend.entity.Repo;
+import com.dsec.backend.entity.ToolEntity;
 import com.dsec.backend.hateoas.RepoAssembler;
 import com.dsec.backend.model.EmptyDTO;
+import com.dsec.backend.model.job.JobDTO;
 import com.dsec.backend.model.repo.CreateRepoDTO;
-import com.dsec.backend.service.JobService;
-import com.dsec.backend.service.RepoService;
+import com.dsec.backend.model.tools.RepoToolUpdateDTO;
+import com.dsec.backend.service.job.JobService;
+import com.dsec.backend.service.repo.RepoService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,9 +34,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class RepoController {
     private final RepoService repoService;
-
     private final JobService jobService;
-
     private final RepoAssembler repoAssembler;
 
     @PostMapping("/trigger/{id}")
@@ -46,8 +46,8 @@ public class RepoController {
 
     @PostMapping("/{owner}/{repo}")
     public ResponseEntity<Repo> createRepo(@PathVariable("owner") String owner,
-    @PathVariable("repo") String repoName, @Valid @RequestBody CreateRepoDTO createRepoDTO,
-                                           @AuthenticationPrincipal Jwt jwt) {
+            @PathVariable("repo") String repoName, @Valid @RequestBody CreateRepoDTO createRepoDTO,
+            @AuthenticationPrincipal Jwt jwt) {
 
         Repo repo = repoService.createRepo(owner + "/" + repoName, createRepoDTO, jwt);
 
@@ -72,14 +72,13 @@ public class RepoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Repo> updateRepo(@PathVariable("id") long id, @AuthenticationPrincipal Jwt jwt,
-                                           @RequestBody @Valid CreateRepoDTO createRepoDTO) {
+            @RequestBody @Valid CreateRepoDTO createRepoDTO) {
         Repo repo = repoService.fetch(id);
 
         repoService.updateRepo(id, repo, createRepoDTO, jwt);
 
         return ResponseEntity.ok(repoAssembler.toModel(repo));
     }
-
 
     // Method used only for RepoAssembler and hateos
     public ResponseEntity<Repo> fetchRepo(Long id) {
@@ -88,10 +87,22 @@ public class RepoController {
         return ResponseEntity.ok(repo);
     }
 
-    @GetMapping("/{repoId}/jobs")
-    public ResponseEntity<List<Job>> getJobs(@PathVariable("repoId") long id, @AuthenticationPrincipal Jwt jwt) {
+    @GetMapping("/{id}/jobs")
+    public ResponseEntity<List<JobDTO<?>>> getJobs(@PathVariable("id") long id, @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(jobService.getJobsByRepoID(id, jwt));
     }
 
+    @GetMapping("/{id}/tools")
+    public ResponseEntity<List<ToolEntity>> getTools(@PathVariable("id") long id,
+            @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(repoService.getToolsByRepo(id, jwt));
+    }
+
+    @PutMapping("/{id}/tools")
+    public ResponseEntity<List<ToolEntity>> updateTools(@PathVariable("id") long id,
+            @AuthenticationPrincipal Jwt jwt, @RequestBody @Valid RepoToolUpdateDTO repoToolUpdateDTO) {
+
+        return ResponseEntity.ok(repoService.updateRepoTools(id, repoToolUpdateDTO, jwt));
+    }
 
 }

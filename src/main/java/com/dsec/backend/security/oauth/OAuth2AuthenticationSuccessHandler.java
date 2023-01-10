@@ -1,7 +1,7 @@
 package com.dsec.backend.security.oauth;
 
 import com.dsec.backend.exception.ForbidenAccessException;
-import com.dsec.backend.service.UserService;
+import com.dsec.backend.service.user.UserService;
 import com.dsec.backend.util.JwtUtil;
 import com.dsec.backend.util.cookie.CookieUtil;
 import lombok.RequiredArgsConstructor;
@@ -56,9 +56,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         if (cookie.isPresent()) {
             Long id = jwtUtil.getUserIdFromOAuthToken(cookie.get().getValue());
 
-            if(id != null) {
+            if (id != null) {
                 userService.saveToken(id, token.getTokenValue());
-            }else {
+            } else {
                 clearAuthenticationAttributes(request, response);
 
                 throw new ForbidenAccessException("Invalid oauth token");

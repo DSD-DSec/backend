@@ -7,39 +7,36 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 import org.springframework.util.SerializationUtils;
 
+import com.dsec.backend.config.ConfigProperties;
 import com.dsec.backend.security.UserPrincipal;
 import com.dsec.backend.util.JwtUtil;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Component
-@Profile({"dev", "test"})
+@Profile({ "dev", "test" })
 public class CookieUtilDev implements CookieUtil {
 
+    private final ConfigProperties configProperties;
     private final JwtUtil jwtUtil;
-    private final long jwtExpiry;
-    private final String cookieName;
-
-    public CookieUtilDev(JwtUtil jwtUtil, @Value("${jwt.expiration}") long jwtExpiry,
-            @Value("${jwt.cookie.name}") String cookieName) {
-        this.jwtUtil = jwtUtil;
-        this.jwtExpiry = jwtExpiry;
-        this.cookieName = cookieName;
-    }
 
     @Override
     public void createJwtCookie(HttpServletResponse response, UserPrincipal userPrincipal) {
-        addCookie(response, cookieName, jwtUtil.getToken(userPrincipal, jwtExpiry), jwtExpiry);
+        long exp = configProperties.getJwt().getExpiration();
+        addCookie(response, configProperties.getJwt().getCookieName(), jwtUtil.getToken(userPrincipal, exp), exp);
     }
 
     @Override
     public void deleteJwtCookie(HttpServletRequest request, HttpServletResponse response) {
-        deleteCookie(request, response, cookieName);
+        deleteCookie(request, response, configProperties.getJwt().getCookieName());
     }
 
     @Override
