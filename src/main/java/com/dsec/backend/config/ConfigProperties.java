@@ -69,6 +69,9 @@ public class ConfigProperties {
         @URL
         private String url;
         @NotBlank
+        @URL
+        private String urlPublic;
+        @NotBlank
         private String encryptionKey;
     }
 }

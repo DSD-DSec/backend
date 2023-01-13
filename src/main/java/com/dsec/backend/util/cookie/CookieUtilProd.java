@@ -56,21 +56,23 @@ public class CookieUtilProd implements CookieUtil {
 
     @Override
     public void addCookie(HttpServletResponse response, String name, String value, long maxAge) {
+        String backendDomain = configProperties.getBackend().getUrl().split("://")[1].split(";")[0];
         response.addHeader(HttpHeaders.SET_COOKIE,
                 ResponseCookie.from(name, value)
-                        .httpOnly(true).path("/api").domain(configProperties.getBackend().getUrl().split("://")[1])
+                        .httpOnly(true).path("/api").domain(backendDomain)
                         .maxAge(maxAge).secure(true).sameSite("None").build().toString());
     }
 
     @Override
     public void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
+        String backendDomain = configProperties.getBackend().getUrl().split("://")[1].split(";")[0];
         Cookie[] cookies = request.getCookies();
         if (cookies != null && cookies.length > 0) {
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals(name)) {
                     response.addHeader(HttpHeaders.SET_COOKIE,
                             ResponseCookie.from(name, "").httpOnly(true).path("/api")
-                                    .domain(configProperties.getBackend().getUrl().split("://")[1])
+                                    .domain(backendDomain)
                                     .maxAge(0).secure(true).sameSite("None").build().toString());
                 }
             }
