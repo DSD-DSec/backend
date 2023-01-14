@@ -102,7 +102,7 @@ public class GithubClientServiceImpl implements GithubClientService {
 
         CreateWebhook createWebhook = CreateWebhook.builder().name("web").active(true)
                 .events(List.of("push", "pull_request"))
-                .config(Map.of("url", configProperties.getBackend().getUrl() + "/api/github/webhook", "content_type",
+                .config(Map.of("url", configProperties.getBackend().getUrlPublic() + "/api/github/webhook", "content_type",
                         "json", "insecure_ssl", "0"))
                 .build();
 
@@ -144,7 +144,7 @@ public class GithubClientServiceImpl implements GithubClientService {
         return list.stream().filter(h -> {
             String url = h.getConfig().get("url");
 
-            return url.matches(configProperties.getBackend().getUrl() + "/api/github/webhook");
+            return url.matches(configProperties.getBackend().getUrlPublic() + "/api/github/webhook");
         }).findAny();
     }
 
