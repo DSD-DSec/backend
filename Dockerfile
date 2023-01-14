@@ -1,11 +1,19 @@
 FROM amazoncorretto:17-alpine-jdk as build
+
+RUN apk update && apk add dos2unix
+
 WORKDIR /workspace/app
 
 COPY .mvn .mvn
+
 COPY pom.xml mvnw ./
+
 COPY src src
 
+RUN find . -type f -print0 | xargs -0 dos2unix
+
 RUN ./mvnw package -DskipTests=true -Pprod -Dspring.profiles.active=prod
+
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 
 FROM amazoncorretto:17-alpine
